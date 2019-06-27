@@ -18,6 +18,7 @@ logs/
 *.exe
 *.pdb
 *.chw
+*.idea/
 
 # -------------[ OS generated ]------------------------ #
 .DS_Store
