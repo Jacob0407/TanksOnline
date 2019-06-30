@@ -123,6 +123,67 @@ namespace KBEngine
 			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(Account), property(spaceID / 40002).");
 
 			pAccountModule.useMethodDescrAlias = true;
+			ScriptModule pPlayerAvatarModule = new ScriptModule("PlayerAvatar");
+			EntityDef.moduledefs["PlayerAvatar"] = pPlayerAvatarModule;
+			EntityDef.idmoduledefs[2] = pPlayerAvatarModule;
+
+			Property pPlayerAvatar_position = new Property();
+			pPlayerAvatar_position.name = "position";
+			pPlayerAvatar_position.properUtype = 40000;
+			pPlayerAvatar_position.properFlags = 4;
+			pPlayerAvatar_position.aliasID = 1;
+			Vector3 PlayerAvatar_position_defval = new Vector3();
+			pPlayerAvatar_position.defaultVal = PlayerAvatar_position_defval;
+			pPlayerAvatarModule.propertys["position"] = pPlayerAvatar_position; 
+
+			pPlayerAvatarModule.usePropertyDescrAlias = true;
+			pPlayerAvatarModule.idpropertys[(UInt16)pPlayerAvatar_position.aliasID] = pPlayerAvatar_position;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), property(position / 40000).");
+
+			Property pPlayerAvatar_direction = new Property();
+			pPlayerAvatar_direction.name = "direction";
+			pPlayerAvatar_direction.properUtype = 40001;
+			pPlayerAvatar_direction.properFlags = 4;
+			pPlayerAvatar_direction.aliasID = 2;
+			Vector3 PlayerAvatar_direction_defval = new Vector3();
+			pPlayerAvatar_direction.defaultVal = PlayerAvatar_direction_defval;
+			pPlayerAvatarModule.propertys["direction"] = pPlayerAvatar_direction; 
+
+			pPlayerAvatarModule.usePropertyDescrAlias = true;
+			pPlayerAvatarModule.idpropertys[(UInt16)pPlayerAvatar_direction.aliasID] = pPlayerAvatar_direction;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), property(direction / 40001).");
+
+			Property pPlayerAvatar_spaceID = new Property();
+			pPlayerAvatar_spaceID.name = "spaceID";
+			pPlayerAvatar_spaceID.properUtype = 40002;
+			pPlayerAvatar_spaceID.properFlags = 16;
+			pPlayerAvatar_spaceID.aliasID = 3;
+			UInt32 PlayerAvatar_spaceID_defval;
+			UInt32.TryParse("", out PlayerAvatar_spaceID_defval);
+			pPlayerAvatar_spaceID.defaultVal = PlayerAvatar_spaceID_defval;
+			pPlayerAvatarModule.propertys["spaceID"] = pPlayerAvatar_spaceID; 
+
+			pPlayerAvatarModule.usePropertyDescrAlias = true;
+			pPlayerAvatarModule.idpropertys[(UInt16)pPlayerAvatar_spaceID.aliasID] = pPlayerAvatar_spaceID;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), property(spaceID / 40002).");
+
+			List<DATATYPE_BASE> pPlayerAvatar_onEnter_args = new List<DATATYPE_BASE>();
+
+			Method pPlayerAvatar_onEnter = new Method();
+			pPlayerAvatar_onEnter.name = "onEnter";
+			pPlayerAvatar_onEnter.methodUtype = 1;
+			pPlayerAvatar_onEnter.aliasID = 1;
+			pPlayerAvatar_onEnter.args = pPlayerAvatar_onEnter_args;
+
+			pPlayerAvatarModule.methods["onEnter"] = pPlayerAvatar_onEnter; 
+			pPlayerAvatarModule.useMethodDescrAlias = true;
+			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_onEnter.aliasID] = pPlayerAvatar_onEnter;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onEnter / 1).");
+
 		}
 
 		public static void initDefTypes()

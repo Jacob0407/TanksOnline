@@ -1,0 +1,9 @@
+<root>
+    <!-- BaseApp上的远程方法 -->
+    <BaseMethods>
+    </BaseMethods>
+
+    <!-- CellApp上的远程方法 -->
+    <CellMethods>
+    </CellMethods>
+</root>

@@ -1,0 +1,17 @@
+<root>
+	<Properties>
+	</Properties>
+
+	<ClientMethods>
+	    <!--当实体进入世界空间后，通知客户端-->
+        <onEnter>
+        </onEnter>
+	</ClientMethods>
+
+	<BaseMethods>
+	</BaseMethods>
+
+	<CellMethods>
+	</CellMethods>
+
+</root>

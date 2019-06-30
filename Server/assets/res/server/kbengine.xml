@@ -30,6 +30,7 @@
 	<!-- defined => kbe/res/server/kbengine_defs.xml -->
 	<dbmgr>
 		<account_system>
+			<accountEntityScriptType>PlayerAvatar</accountEntityScriptType>
 			<!-- 账号找回密码相关
 				(Account reset password)
 			-->
