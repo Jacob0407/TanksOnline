@@ -21,6 +21,15 @@ namespace KBEngine
 			type = ENTITYCALL_TYPE.ENTITYCALL_TYPE_BASE;
 		}
 
+		public void reqMatch()
+		{
+			Bundle pBundle = newCall("reqMatch", 0);
+			if(pBundle == null)
+				return;
+
+			sendCall(null);
+		}
+
 	}
 
 	public class EntityCellEntityCall_PlayerAvatarBase : EntityCall

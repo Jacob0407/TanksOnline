@@ -13,7 +13,8 @@ def onBaseAppReady(isBootstrap):
 	INFO_MSG('onBaseAppReady: isBootstrap=%s, appID=%s, bootstrapGroupIndex=%s, bootstrapGlobalIndex=%s' % \
 	 (isBootstrap, os.getenv("KBE_COMPONENTID"), os.getenv("KBE_BOOTIDX_GROUP"), os.getenv("KBE_BOOTIDX_GLOBAL")))
 
-	KBEngine.createEntityLocally("SpaceRoom", {})
+	if isBootstrap:
+		KBEngine.createEntityLocally("SpaceMgr", {})  # 创建全局的space管理器
 
 def onReadyForLogin(isBootstrap):
 	"""

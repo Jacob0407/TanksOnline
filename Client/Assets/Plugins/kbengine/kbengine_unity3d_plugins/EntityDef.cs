@@ -123,6 +123,21 @@ namespace KBEngine
 			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(Account), property(spaceID / 40002).");
 
 			pAccountModule.useMethodDescrAlias = true;
+			List<DATATYPE_BASE> pAccount_reqMatch_args = new List<DATATYPE_BASE>();
+
+			Method pAccount_reqMatch = new Method();
+			pAccount_reqMatch.name = "reqMatch";
+			pAccount_reqMatch.methodUtype = 1;
+			pAccount_reqMatch.aliasID = -1;
+			pAccount_reqMatch.args = pAccount_reqMatch_args;
+
+			pAccountModule.methods["reqMatch"] = pAccount_reqMatch; 
+			pAccountModule.base_methods["reqMatch"] = pAccount_reqMatch;
+
+			pAccountModule.idbase_methods[pAccount_reqMatch.methodUtype] = pAccount_reqMatch;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(Account), method(reqMatch / 1).");
+
 			ScriptModule pPlayerAvatarModule = new ScriptModule("PlayerAvatar");
 			EntityDef.moduledefs["PlayerAvatar"] = pPlayerAvatarModule;
 			EntityDef.idmoduledefs[2] = pPlayerAvatarModule;
@@ -174,7 +189,7 @@ namespace KBEngine
 
 			Method pPlayerAvatar_onEnter = new Method();
 			pPlayerAvatar_onEnter.name = "onEnter";
-			pPlayerAvatar_onEnter.methodUtype = 1;
+			pPlayerAvatar_onEnter.methodUtype = 3;
 			pPlayerAvatar_onEnter.aliasID = 1;
 			pPlayerAvatar_onEnter.args = pPlayerAvatar_onEnter_args;
 
@@ -182,7 +197,51 @@ namespace KBEngine
 			pPlayerAvatarModule.useMethodDescrAlias = true;
 			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_onEnter.aliasID] = pPlayerAvatar_onEnter;
 
-			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onEnter / 1).");
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onEnter / 3).");
+
+			List<DATATYPE_BASE> pPlayerAvatar_onEnterBattleRoom_args = new List<DATATYPE_BASE>();
+
+			Method pPlayerAvatar_onEnterBattleRoom = new Method();
+			pPlayerAvatar_onEnterBattleRoom.name = "onEnterBattleRoom";
+			pPlayerAvatar_onEnterBattleRoom.methodUtype = 5;
+			pPlayerAvatar_onEnterBattleRoom.aliasID = 2;
+			pPlayerAvatar_onEnterBattleRoom.args = pPlayerAvatar_onEnterBattleRoom_args;
+
+			pPlayerAvatarModule.methods["onEnterBattleRoom"] = pPlayerAvatar_onEnterBattleRoom; 
+			pPlayerAvatarModule.useMethodDescrAlias = true;
+			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_onEnterBattleRoom.aliasID] = pPlayerAvatar_onEnterBattleRoom;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onEnterBattleRoom / 5).");
+
+			List<DATATYPE_BASE> pPlayerAvatar_onMatch_args = new List<DATATYPE_BASE>();
+			pPlayerAvatar_onMatch_args.Add(EntityDef.id2datatypes[4]);
+
+			Method pPlayerAvatar_onMatch = new Method();
+			pPlayerAvatar_onMatch.name = "onMatch";
+			pPlayerAvatar_onMatch.methodUtype = 4;
+			pPlayerAvatar_onMatch.aliasID = 3;
+			pPlayerAvatar_onMatch.args = pPlayerAvatar_onMatch_args;
+
+			pPlayerAvatarModule.methods["onMatch"] = pPlayerAvatar_onMatch; 
+			pPlayerAvatarModule.useMethodDescrAlias = true;
+			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_onMatch.aliasID] = pPlayerAvatar_onMatch;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onMatch / 4).");
+
+			List<DATATYPE_BASE> pPlayerAvatar_reqMatch_args = new List<DATATYPE_BASE>();
+
+			Method pPlayerAvatar_reqMatch = new Method();
+			pPlayerAvatar_reqMatch.name = "reqMatch";
+			pPlayerAvatar_reqMatch.methodUtype = 2;
+			pPlayerAvatar_reqMatch.aliasID = -1;
+			pPlayerAvatar_reqMatch.args = pPlayerAvatar_reqMatch_args;
+
+			pPlayerAvatarModule.methods["reqMatch"] = pPlayerAvatar_reqMatch; 
+			pPlayerAvatarModule.base_methods["reqMatch"] = pPlayerAvatar_reqMatch;
+
+			pPlayerAvatarModule.idbase_methods[pPlayerAvatar_reqMatch.methodUtype] = pPlayerAvatar_reqMatch;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(reqMatch / 2).");
 
 		}
 

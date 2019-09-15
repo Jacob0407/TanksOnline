@@ -2,10 +2,13 @@
 	<Properties>
 	</Properties>
 
-	<ClientMethods>
+	<ClientMethods>s
 	</ClientMethods>
 
 	<BaseMethods>
+	    <reqMatch>
+	        <Exposed/>
+        </reqMatch>
 	</BaseMethods>
 
 	<CellMethods>

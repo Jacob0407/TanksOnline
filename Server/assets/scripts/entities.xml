@@ -9,4 +9,5 @@
 	<Account hasClient="true"></Account><!-- <Account hasCell="true" hasBase="true" hasClient="true"></Account> -->
 	<PlayerAvatar hasClient="true"></PlayerAvatar>
 	<SpaceRoom></SpaceRoom>
+	<SpaceMgr></SpaceMgr>
 </root>

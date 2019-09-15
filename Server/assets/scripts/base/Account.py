@@ -6,6 +6,7 @@ from KBEDebug import *
 class Account(KBEngine.Proxy):
 	def __init__(self):
 		KBEngine.Proxy.__init__(self)
+		self.activeAvatar = None
 		
 	def onTimer(self, id, userArg):
 		"""
@@ -23,6 +24,7 @@ class Account(KBEngine.Proxy):
 		cell部分。
 		"""
 		INFO_MSG("account[%i] entities enable. entityCall:%s" % (self.id, self.client))
+		self.becomePlayerAvatar()
 			
 	def onLogOnAttempt(self, ip, port, password):
 		"""
@@ -39,3 +41,19 @@ class Account(KBEngine.Proxy):
 		"""
 		DEBUG_MSG("Account[%i].onClientDeath:" % self.id)
 		self.destroy()
+
+	def reqMatch(self):
+		DEBUG_MSG("Account:%i, reqMatch" % self.id)
+
+	def becomePlayerAvatar(self):
+		"""
+		从Account成为Avatar
+		:return:
+		"""
+
+		avatar = KBEngine.createEntityLocally('PlayerAvatar', {})
+		if avatar:
+			DEBUG_MSG("Account[%i].becomePlayerAvatar\n" % self.id)
+			self.activeAvatar = avatar
+			self.giveClientTo(self.activeAvatar)
+

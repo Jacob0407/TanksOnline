@@ -9,3 +9,4 @@ class PlayerAvatar(KBEngine.Entity):
 		KBEngine.Entity.__init__(self)
 		WARNING_MSG("PlayerAvatar::cell::init")
 		self.client.onEnter()
+

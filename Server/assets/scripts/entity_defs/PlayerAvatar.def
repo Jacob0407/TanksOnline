@@ -6,9 +6,19 @@
 	    <!--当实体进入世界空间后，通知客户端-->
         <onEnter>
         </onEnter>
+
+        <onMatch>
+            <Arg>   UINT32         </Arg>        <!--当前处于匹配的第几位-->
+        </onMatch>
+
+        <onEnterBattleRoom>
+        </onEnterBattleRoom>
 	</ClientMethods>
 
 	<BaseMethods>
+        <reqMatch>
+	        <Exposed/>
+	    </reqMatch>
 	</BaseMethods>
 
 	<CellMethods>
