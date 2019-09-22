@@ -22,6 +22,12 @@
 	</BaseMethods>
 
 	<CellMethods>
+	    <onTeleportSpaceCB>
+			<Arg>		ENTITYCALL		</Arg>
+			<Arg>		ENTITYCALL		</Arg>
+			<Arg>		POSITION3D		</Arg>
+			<Arg>		DIRECTION3D		</Arg>
+		</onTeleportSpaceCB>
 	</CellMethods>
 
 </root>

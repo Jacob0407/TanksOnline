@@ -91,13 +91,13 @@ namespace KBEngine
 
 			switch(method.methodUtype)
 			{
-				case 3:
+				case 4:
 					onEnter();
 					break;
-				case 5:
+				case 6:
 					onEnterBattleRoom();
 					break;
-				case 4:
+				case 5:
 					UInt32 onMatch_arg1 = stream.readUint32();
 					onMatch(onMatch_arg1);
 					break;

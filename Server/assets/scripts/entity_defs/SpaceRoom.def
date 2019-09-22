@@ -6,5 +6,8 @@
 
     <!-- CellApp上的远程方法 -->
     <CellMethods>
+        <leave>
+			<Arg>		ENTITY_ID		</Arg>
+		</leave>
     </CellMethods>
 </root>

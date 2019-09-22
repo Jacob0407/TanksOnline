@@ -8,4 +8,4 @@ class SpaceType(object):
 
 
 class MatchArgs(object):
-	BATTLE_ROOM_MATCH_PLAYER_NUM = 2
+	BATTLE_ROOM_MATCH_PLAYER_NUM = 1

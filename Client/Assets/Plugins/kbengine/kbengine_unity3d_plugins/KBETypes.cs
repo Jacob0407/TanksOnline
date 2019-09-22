@@ -708,5 +708,122 @@ namespace KBEngine
 		}
 	}
 
+	public struct POSITION3D
+	{
+		Vector3 value;
+
+		POSITION3D(Vector3 value)
+		{
+			this.value = value;
+		}
+
+		public static implicit operator Vector3(POSITION3D value)
+		{
+			return value.value;
+		}
+
+		public static implicit operator POSITION3D(Vector3 value)
+		{
+			Vector3 tvalue = (Vector3)value;
+			return new POSITION3D(tvalue);
+		}
+
+		public float x
+		{
+			get { return value.x; }
+			set { this.value.x = value; }
+		}
+
+		public float y
+		{
+			get { return value.y; }
+			set { this.value.y = value; }
+		}
+
+		public float z
+		{
+			get { return value.z; }
+			set { this.value.z = value; }
+		}
+
+	}
+
+	public struct DIRECTION3D
+	{
+		Vector3 value;
+
+		DIRECTION3D(Vector3 value)
+		{
+			this.value = value;
+		}
+
+		public static implicit operator Vector3(DIRECTION3D value)
+		{
+			return value.value;
+		}
+
+		public static implicit operator DIRECTION3D(Vector3 value)
+		{
+			Vector3 tvalue = (Vector3)value;
+			return new DIRECTION3D(tvalue);
+		}
+
+		public float x
+		{
+			get { return value.x; }
+			set { this.value.x = value; }
+		}
+
+		public float y
+		{
+			get { return value.y; }
+			set { this.value.y = value; }
+		}
+
+		public float z
+		{
+			get { return value.z; }
+			set { this.value.z = value; }
+		}
+
+	}
+
+	public struct ENTITY_ID
+	{
+		Int32 value;
+
+		ENTITY_ID(Int32 value)
+		{
+			this.value = value;
+		}
+
+		public static implicit operator Int32(ENTITY_ID value)
+		{
+			return value.value;
+		}
+
+		public static implicit operator ENTITY_ID(Int32 value)
+		{
+			Int32 tvalue = (Int32)value;
+			return new ENTITY_ID(tvalue);
+		}
+
+		public static Int32 MaxValue
+		{
+			get
+			{
+				return Int32.MaxValue;
+			}
+		}
+
+		public static Int32 MinValue
+		{
+			get
+			{
+				return Int32.MinValue;
+			}
+		}
+	}
+
 
 }

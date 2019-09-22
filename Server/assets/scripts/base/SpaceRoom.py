@@ -3,7 +3,7 @@
 import KBEngine
 from KBEDebug import *
 from IdManager import IDManager
-from consts import MatchArgs
+from consts import MatchArgs, SpaceType
 
 
 class SpaceRoom(KBEngine.Space):
@@ -14,8 +14,17 @@ class SpaceRoom(KBEngine.Space):
 		self._avatar_dict = {}  # 本space内所有的avatar列表
 		self._waitToEnterList = list()  # 等待进入space的avatar
 
+		self.spaceMgr = KBEngine.globalData['SpaceMgr']
+
 	def enter(self, avatar_entity_call):
-		avatar_entity_call.createCellEntity(self.cell)
+		if self.uType == SpaceType.SPACE_TYPE_HALL:
+			avatar_entity_call.createCellEntity(self.cell)
+		else:
+			# 从大厅进入战场
+			# 先从大厅离开
+			avatar_entity_call.curHallSpace.leave(avatar_entity_call.id)
+			avatar_entity_call.cell.onTeleportSpaceCB(self, self.cell, (0, 0, 0), (0, 0, 0))
+
 		self._avatar_dict[avatar_entity_call.id] = avatar_entity_call
 
 		avatar_entity_call.onEnterSpace(self.id, self.uType)
@@ -25,8 +34,7 @@ class SpaceRoom(KBEngine.Space):
 		if avatar:
 			del self._avatar_dict[avatar_id]
 
-			if avatar.cell:
-				avatar.destroyCellEntity()
+		self.cell and self.cell.leave(avatar_id)
 
 	def onGetCell(self):
 		DEBUG_MSG("[Space], onGetCell, id=%i, type=%i" % (self.id, self.uType))
@@ -61,9 +69,13 @@ class SpaceRoom(KBEngine.Space):
 		matchNum = len(self._wait_to_match_avatar_set)
 		if matchNum >= MatchArgs.BATTLE_ROOM_MATCH_PLAYER_NUM:
 			INFO_MSG("[SpaceRoom], %i, %i, ready to enter battle room" % (self.id, self.uType))
+
+			_readyAvatarSet = set()
 			for _ava_id in self._wait_to_match_avatar_set:
 				_avatar = self._avatar_dict.get(_ava_id, None)
-				_avatar and _avatar.client.onEnterBattleRoom()
+				_avatar and _readyAvatarSet.add(_avatar)
+
+			self.spaceMgr.enterSpace(_readyAvatarSet, SpaceType.SPACE_TYPE_BATTLE)
 
 			self._wait_to_match_avatar_set = set()
 			return

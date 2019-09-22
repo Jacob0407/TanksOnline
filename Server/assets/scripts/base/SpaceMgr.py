@@ -14,23 +14,29 @@ class SpaceMgr(KBEngine.Entity):
 
 		KBEngine.globalData["SpaceMgr"] = self
 
-	def enterSpace(self, avatarEntityCall, spaceUtype):
+	def enterSpace(self, avatarEntityCallSet, spaceUtype):
 		"""
-		:param avatarEntityCall: 玩家的entitycall
+		一群玩家进入某个space
+		:param avatarEntityCallSet: 玩家的entitycall的集合
 		:param spaceUtype: 请求进入的空间类型
 		:return:
 		"""
 
 		space = self._spaceUtypeDict.get(spaceUtype, None)
 		if not space:
-			INFO_MSG("[Space], avatar:%s enter space error, space_type:%i " % (avatarEntityCall, spaceUtype))
+			INFO_MSG("[Space], avatars:%s enter space error, space_type:%i " % (avatarEntityCallSet, spaceUtype))
 
 			new_space = KBEngine.createEntityLocally("SpaceRoom", {'uType': spaceUtype})  # 创建大厅
-			new_space and new_space.addWaitToEnter(avatarEntityCall)
+			if not new_space:
+				return
+
+			for avatarEntityCall in avatarEntityCallSet:
+				new_space.addWaitToEnter(avatarEntityCall)
 
 			return
 
-		space.enter(avatarEntityCall)
+		for avatarEntityCall in avatarEntityCallSet:
+			space.enter(avatarEntityCall)
 
 	def leaveSpace(self, avatarId, spaceKey):
 		"""

@@ -13,10 +13,14 @@ class PlayerAvatar(KBEngine.Proxy):
 		self.battleSpaceID = 0  # 所在的战场spaceid
 		WARNING_MSG("PlayerAvatar::base::init")
 
+	@property
+	def curHallSpace(self):
+		return KBEngine.entities.get(self.hallSpaceID, None) if self.hallSpaceID else None
+
 	def onClientEnabled(self):
 		INFO_MSG("PlayerAvatar::onClientEnabled, ready to enter space")
 		spaceMgr = KBEngine.globalData['SpaceMgr']
-		spaceMgr and spaceMgr.enterSpace(self, SpaceType.SPACE_TYPE_HALL)
+		spaceMgr and spaceMgr.enterSpace({self}, SpaceType.SPACE_TYPE_HALL)
 
 	def onGetCell(self):
 		"""
@@ -24,13 +28,6 @@ class PlayerAvatar(KBEngine.Proxy):
 		entity的cell部分实体被创建成功
 		"""
 		DEBUG_MSG('PlayerAvatar::onGetCell: %s' % self.cell)
-
-	def createCell(self, space):
-		"""
-		defined method.
-		创建cell实体
-		"""
-		self.createCellEntity(space)
 
 	def destroySelf(self):
 		"""
@@ -47,8 +44,7 @@ class PlayerAvatar(KBEngine.Proxy):
 
 	def reqMatch(self):
 		INFO_MSG("[PlayerAvatar], %s, reqMatch" % (self.id))
-		space = KBEngine.entities.get(self.hallSpaceID, None)
-		space and space.avatarReqMatch(self.id)
+		self.curHallSpace and self.curHallSpace.avatarReqMatch(self.id)
 
 	# --------------------------------------------------------------------------------------------
 	#                              Callbacks
