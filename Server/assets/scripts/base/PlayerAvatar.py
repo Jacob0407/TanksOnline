@@ -11,6 +11,8 @@ class PlayerAvatar(KBEngine.Proxy):
 		KBEngine.Entity.__init__(self)
 		self.hallSpaceID = 0  # 所在的大厅spaceid
 		self.battleSpaceID = 0  # 所在的战场spaceid
+		self.born_position = None  # 出生的坐标
+		self.born_yaw = 0  # 出生时的yaw值
 		WARNING_MSG("PlayerAvatar::base::init")
 
 	@property

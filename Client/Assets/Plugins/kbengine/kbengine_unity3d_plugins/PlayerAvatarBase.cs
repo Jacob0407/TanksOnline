@@ -21,7 +21,7 @@ namespace KBEngine
 
 
 		public abstract void onEnter(); 
-		public abstract void onEnterBattleRoom(); 
+		public abstract void onEnterBattleRoom(AVATAR_INFO_LIST arg1); 
 		public abstract void onMatch(UInt32 arg1); 
 
 		public PlayerAvatarBase()
@@ -95,7 +95,8 @@ namespace KBEngine
 					onEnter();
 					break;
 				case 6:
-					onEnterBattleRoom();
+					AVATAR_INFO_LIST onEnterBattleRoom_arg1 = ((DATATYPE_AVATAR_INFO_LIST)method.args[0]).createFromStreamEx(stream);
+					onEnterBattleRoom(onEnterBattleRoom_arg1);
 					break;
 				case 5:
 					UInt32 onMatch_arg1 = stream.readUint32();

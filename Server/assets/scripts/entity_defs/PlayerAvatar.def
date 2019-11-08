@@ -12,6 +12,7 @@
         </onMatch>
 
         <onEnterBattleRoom>
+            <Arg> AVATAR_INFO_LIST </Arg>
         </onEnterBattleRoom>
 	</ClientMethods>
 
@@ -28,6 +29,7 @@
 			<Arg>		POSITION3D		</Arg>
 			<Arg>		DIRECTION3D		</Arg>
 		</onTeleportSpaceCB>
+
 	</CellMethods>
 
 </root>

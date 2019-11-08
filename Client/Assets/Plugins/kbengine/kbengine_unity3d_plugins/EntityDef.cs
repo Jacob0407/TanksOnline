@@ -200,6 +200,7 @@ namespace KBEngine
 			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onEnter / 4).");
 
 			List<DATATYPE_BASE> pPlayerAvatar_onEnterBattleRoom_args = new List<DATATYPE_BASE>();
+			pPlayerAvatar_onEnterBattleRoom_args.Add(EntityDef.id2datatypes[23]);
 
 			Method pPlayerAvatar_onEnterBattleRoom = new Method();
 			pPlayerAvatar_onEnterBattleRoom.name = "onEnterBattleRoom";
@@ -474,6 +475,24 @@ namespace KBEngine
 				DATATYPE_BASE val = null;
 				EntityDef.datatypes.TryGetValue(name, out val);
 				EntityDef.datatypes[typeName] = val;
+				EntityDef.id2datatypes[utype] = EntityDef.datatypes[typeName];
+				EntityDef.datatype2id[typeName] = utype;
+			}
+
+			{
+				UInt16 utype = 22;
+				string typeName = "AVATAR_INFO";
+				DATATYPE_AVATAR_INFO datatype = new DATATYPE_AVATAR_INFO();
+				EntityDef.datatypes[typeName] = datatype;
+				EntityDef.id2datatypes[utype] = EntityDef.datatypes[typeName];
+				EntityDef.datatype2id[typeName] = utype;
+			}
+
+			{
+				UInt16 utype = 23;
+				string typeName = "AVATAR_INFO_LIST";
+				DATATYPE_AVATAR_INFO_LIST datatype = new DATATYPE_AVATAR_INFO_LIST();
+				EntityDef.datatypes[typeName] = datatype;
 				EntityDef.id2datatypes[utype] = EntityDef.datatypes[typeName];
 				EntityDef.datatype2id[typeName] = utype;
 			}

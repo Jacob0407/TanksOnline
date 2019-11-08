@@ -3,7 +3,7 @@
 import KBEngine
 from KBEDebug import *
 from IdManager import IDManager
-from consts import MatchArgs, SpaceType
+from consts import MatchArgs, SpaceType, BornPositionList, BornYaw
 
 
 class SpaceRoom(KBEngine.Space):
@@ -70,12 +70,21 @@ class SpaceRoom(KBEngine.Space):
 		if matchNum >= MatchArgs.BATTLE_ROOM_MATCH_PLAYER_NUM:
 			INFO_MSG("[SpaceRoom], %i, %i, ready to enter battle room" % (self.id, self.uType))
 
+			avatar_info = dict()
+			index = 0
 			_readyAvatarSet = set()
 			for _ava_id in self._wait_to_match_avatar_set:
 				_avatar = self._avatar_dict.get(_ava_id, None)
-				_avatar and _readyAvatarSet.add(_avatar)
+				if _avatar:
+					_avatar.born_position = BornPositionList[index]
+					_avatar.born_yaw = BornYaw[index]
+					_readyAvatarSet.add(_avatar)
+					index = index + 1  # noqa
+					avatar_info[_avatar.id] = dict()
+					avatar_info[_avatar.id]["born_position"] = _avatar.born_position
+					avatar_info[_avatar.id]["born_yaw"] = _avatar.born_yaw
 
-			self.spaceMgr.enterSpace(_readyAvatarSet, SpaceType.SPACE_TYPE_BATTLE)
+			self.spaceMgr.enterSpace(_readyAvatarSet, SpaceType.SPACE_TYPE_BATTLE, avatar_info)
 
 			self._wait_to_match_avatar_set = set()
 			return

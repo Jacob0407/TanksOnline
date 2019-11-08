@@ -825,5 +825,19 @@ namespace KBEngine
 		}
 	}
 
+	public class AVATAR_INFO
+	{
+		public Int32 entity_id = 0;
+		public Vector3 born_position = new Vector3(0f, 0f, 0f);
+		public Byte born_yaw = 0;
+
+	}
+
+	public class AVATAR_INFO_LIST
+	{
+		public List<AVATAR_INFO> values = new List<AVATAR_INFO>();
+
+	}
+
 
 }

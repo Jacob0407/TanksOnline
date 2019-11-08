@@ -2,6 +2,7 @@
 
 import KBEngine
 from KBEDebug import *
+from AVATAR_INFO import TAvatarInfoList
 
 
 class PlayerAvatar(KBEngine.Entity):
@@ -22,11 +23,14 @@ class PlayerAvatar(KBEngine.Entity):
 		self.curSpaceBaseEntityCall = spaceBaseEntityCall
 		self.teleport(spaceCellEntityCall, position, direction)
 
-	def onTeleportSuccess(self, nearbyEntity):
+	def onTeleportSuccess(self, space_room):
 		"""
 		KBEngine method.
 		"""
-		DEBUG_MSG("PlayerAvatar::onTeleportSuccess: %s" % (nearbyEntity))
-		self.client.onEnterBattleRoom()
+		DEBUG_MSG("PlayerAvatar::onTeleportSuccess: %s, %s" % (space_room, space_room.get_all_avatar_info()))
+
+		data = space_room.get_all_avatar_info()
+		self.client.onEnterBattleRoom(data)
+
 
 

@@ -8,4 +8,10 @@ class SpaceType(object):
 
 
 class MatchArgs(object):
-	BATTLE_ROOM_MATCH_PLAYER_NUM = 1
+	BATTLE_ROOM_MATCH_PLAYER_NUM = 2
+
+
+# 出生坐标
+BornPositionList = ((-3, 0, 30), (13, 0, -5))
+# 出生角度
+BornYaw = (180, 0)

@@ -1,4 +1,15 @@
 <root>
+    <Properties>
+        <room_type>
+            <Type> UINT8 </Type>
+            <Flags> CELL_PRIVATE </Flags>
+        </room_type>
+
+        <avatar_info>
+            <Type> PY_DICT </Type>
+            <Flags> CELL_PRIVATE </Flags>
+        </avatar_info>
+	</Properties>
 
     <!-- BaseApp上的远程方法 -->
     <BaseMethods>

@@ -123,6 +123,7 @@ namespace Complete
 
             // Apply this movement to the rigidbody's position.
             m_Rigidbody.MovePosition(m_Rigidbody.position + movement);
+            GameManager.g_Player.position = m_Rigidbody.position;
         }
 
 

@@ -12,4 +12,72 @@ namespace KBEngine
 	using System.Collections.Generic;
 
 
+
+	public class DATATYPE_AVATAR_INFO : DATATYPE_BASE
+	{
+		public AVATAR_INFO createFromStreamEx(MemoryStream stream)
+		{
+			AVATAR_INFO datas = new AVATAR_INFO();
+			datas.entity_id = stream.readInt32();
+			datas.born_position = stream.readVector3();
+			datas.born_yaw = stream.readUint8();
+			return datas;
+		}
+
+		public void addToStreamEx(Bundle stream, AVATAR_INFO v)
+		{
+			stream.writeInt32(v.entity_id);
+			stream.writeVector3(v.born_position);
+			stream.writeUint8(v.born_yaw);
+		}
+	}
+
+
+
+	public class DATATYPE_AVATAR_INFO_LIST : DATATYPE_BASE
+	{
+		private DATATYPE__AVATAR_INFO_LIST_values_ArrayType_ChildArray values_DataType = new DATATYPE__AVATAR_INFO_LIST_values_ArrayType_ChildArray();
+
+		public class DATATYPE__AVATAR_INFO_LIST_values_ArrayType_ChildArray : DATATYPE_BASE
+		{
+			private DATATYPE_AVATAR_INFO itemType = new DATATYPE_AVATAR_INFO();
+
+			public List<AVATAR_INFO> createFromStreamEx(MemoryStream stream)
+			{
+				UInt32 size = stream.readUint32();
+				List<AVATAR_INFO> datas = new List<AVATAR_INFO>();
+
+				while(size > 0)
+				{
+					--size;
+					datas.Add(itemType.createFromStreamEx(stream));
+				};
+
+				return datas;
+			}
+
+			public void addToStreamEx(Bundle stream, List<AVATAR_INFO> v)
+			{
+				stream.writeUint32((UInt32)v.Count);
+				for(int i=0; i<v.Count; ++i)
+				{
+					itemType.addToStreamEx(stream, v[i]);
+				};
+			}
+		}
+
+		public AVATAR_INFO_LIST createFromStreamEx(MemoryStream stream)
+		{
+			AVATAR_INFO_LIST datas = new AVATAR_INFO_LIST();
+			datas.values = values_DataType.createFromStreamEx(stream);
+			return datas;
+		}
+
+		public void addToStreamEx(Bundle stream, AVATAR_INFO_LIST v)
+		{
+			values_DataType.addToStreamEx(stream, v.values);
+		}
+	}
+
+
 }

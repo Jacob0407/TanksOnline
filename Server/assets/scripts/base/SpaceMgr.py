@@ -2,6 +2,7 @@
 
 import KBEngine
 from KBEDebug import *
+from AVATAR_INFO import TAvatarInfo
 
 
 class SpaceMgr(KBEngine.Entity):
@@ -14,7 +15,7 @@ class SpaceMgr(KBEngine.Entity):
 
 		KBEngine.globalData["SpaceMgr"] = self
 
-	def enterSpace(self, avatarEntityCallSet, spaceUtype):
+	def enterSpace(self, avatarEntityCallSet, spaceUtype, avatarInfo={}):
 		"""
 		一群玩家进入某个space
 		:param avatarEntityCallSet: 玩家的entitycall的集合
@@ -24,9 +25,9 @@ class SpaceMgr(KBEngine.Entity):
 
 		space = self._spaceUtypeDict.get(spaceUtype, None)
 		if not space:
-			INFO_MSG("[Space], avatars:%s enter space error, space_type:%i " % (avatarEntityCallSet, spaceUtype))
+			INFO_MSG("[Space], avatars:%s enter space error, space_type:%i, avatar_info:%s" % (avatarEntityCallSet, spaceUtype, avatarInfo))
 
-			new_space = KBEngine.createEntityLocally("SpaceRoom", {'uType': spaceUtype})  # 创建大厅
+			new_space = KBEngine.createEntityLocally("SpaceRoom", {'uType': spaceUtype, 'room_type': spaceUtype, 'avatar_info': avatarInfo})  # 创建space
 			if not new_space:
 				return
 
