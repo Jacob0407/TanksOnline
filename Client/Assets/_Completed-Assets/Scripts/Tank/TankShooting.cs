@@ -43,6 +43,9 @@ namespace Complete
 
         private void Update ()
         {
+            if (m_PlayerNumber != 1)
+                return;
+
             // The slider should have a default value of the minimum launch force.
             m_AimSlider.value = m_MinLaunchForce;
 

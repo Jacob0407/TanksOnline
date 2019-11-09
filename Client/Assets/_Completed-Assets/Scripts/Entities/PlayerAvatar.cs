@@ -6,11 +6,11 @@ using Complete;
 
 public class PlayerAvatar : PlayerAvatarBase
 {
+    public TankManager m_TankManager = new TankManager();   // 对于的实际控制坦克
     private bool firstMatch = true;
 
     public override void onEnter()
     {
-        GameManager.g_Player = this;
         Dbg.INFO_MSG("PlayerAvatar::onEnter");
         this.baseEntityCall.reqMatch();
     }
@@ -28,5 +28,13 @@ public class PlayerAvatar : PlayerAvatarBase
             SceneManager.LoadScene("Match");
         else
             firstMatch = false;
+    }
+
+    public override void onEnterWorld()
+    {
+        if (this.isPlayer())
+            GameManager.g_MainPlayer = this;
+        else
+            GameManager.g_OtherPlayers.Add(this.id, this);
     }
 }

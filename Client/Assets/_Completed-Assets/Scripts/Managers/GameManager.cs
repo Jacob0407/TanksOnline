@@ -15,9 +15,9 @@ namespace Complete
         public CameraControl m_CameraControl;       // Reference to the CameraControl script for control during different phases.
         public Text m_MessageText;                  // Reference to the overlay Text to display winning text, etc.
         public GameObject m_TankPrefab;             // Reference to the prefab the players will control.
-        public Dictionary<ENTITY_ID, TankManager> m_Tanks = new Dictionary<ENTITY_ID, TankManager>(); // 非主玩家坦克管理器
-        public TankManager m_PlayerTank;            // 主玩家自己控制的坦克管理器
-        public static PlayerAvatar g_Player;               // 主玩家
+
+        public static PlayerAvatar g_MainPlayer;           // 主玩家
+        public static Dictionary<ENTITY_ID, PlayerAvatar> g_OtherPlayers = new Dictionary<ENTITY_ID, PlayerAvatar>();  // 其他非主玩家
 
         
         private int m_RoundNumber;                  // Which round the game is currently on.
@@ -54,22 +54,28 @@ namespace Complete
         {
             foreach (var avatar in m_allAvatarBaseInfo.values)
             {
-                if (g_Player.id == avatar.entity_id)
+                if (g_MainPlayer.id == avatar.entity_id)
                 {
+                    if (g_MainPlayer == null)
+                        continue;
+
                     // 主客户端
-                    m_PlayerTank.m_Instance = Instantiate(m_TankPrefab, avatar.born_position, new Quaternion(0, avatar.born_yaw, 0, 0)) as GameObject;
-                    m_PlayerTank.m_PlayerNumber = 1;
-                    m_PlayerTank.Setup();
+                    g_MainPlayer.m_TankManager.m_Instance = Instantiate(m_TankPrefab, avatar.born_position, new Quaternion(0, avatar.born_yaw, 0, 0)) as GameObject;
+                    g_MainPlayer.m_TankManager.m_PlayerNumber = 1;
+                    g_MainPlayer.m_TankManager.Setup();
                 }
                 else
                 {
+                    if (!g_OtherPlayers.ContainsKey(avatar.entity_id))
+                        continue;
+
                     TankManager tank = new TankManager
                     {
                         m_Instance = Instantiate(m_TankPrefab, avatar.born_position, new Quaternion(0, avatar.born_yaw, 0, 0)) as GameObject,
-                        m_PlayerNumber = 1
+                        m_PlayerNumber = avatar.entity_id
                     };
                     tank.Setup();
-                    m_Tanks[avatar.entity_id] = tank;
+                    g_OtherPlayers[avatar.entity_id].m_TankManager = tank;
                 }
             }
         }
@@ -80,11 +86,11 @@ namespace Complete
             // Create a collection of transforms the same size as the number of tanks.
             Transform[] targets = new Transform[m_allAvatarBaseInfo.values.Count];
 
-            targets[0] = m_PlayerTank.m_Instance.transform;
+            targets[0] = g_MainPlayer.m_TankManager.m_Instance.transform;
             int index = 1;
-            foreach (var tank in m_Tanks)
+            foreach (var tank in g_OtherPlayers)
             {
-                targets[index] = tank.Value.m_Instance.transform;
+                targets[index] = tank.Value.m_TankManager.m_Instance.transform;
             }
             
             // These are the targets the camera should follow.
@@ -193,10 +199,10 @@ namespace Complete
         private TankManager GetRoundWinner()
         {
             // Go through all the tanks...
-            foreach (var tankData in m_Tanks)
+            foreach (var tankData in g_OtherPlayers)
             {
-                if (tankData.Value.m_Instance.activeSelf)
-                    return tankData.Value;
+                if (tankData.Value.m_TankManager.m_Instance.activeSelf)
+                    return tankData.Value.m_TankManager;
             }
 
             // If none of the tanks are active it is a draw so return null.
@@ -208,10 +214,10 @@ namespace Complete
         private TankManager GetGameWinner()
         {
             // Go through all the tanks...
-            foreach (var tankData in m_Tanks)
+            foreach (var tankData in g_OtherPlayers)
             {
-                if (tankData.Value.m_Wins == m_NumRoundsToWin)
-                    return tankData.Value;
+                if (tankData.Value.m_TankManager.m_Wins == m_NumRoundsToWin)
+                    return tankData.Value.m_TankManager;
             }
 
             // If no tanks have enough rounds to win, return null.
@@ -233,9 +239,9 @@ namespace Complete
             message += "\n\n\n\n";
 
             // Go through all the tanks and add each of their scores to the message.
-            foreach (var tankData in m_Tanks)
+            foreach (var tankData in g_OtherPlayers)
             {
-                message += tankData.Value.m_ColoredPlayerText + ": " + tankData.Value.m_Wins + " WINS\n";
+                message += tankData.Value.m_TankManager.m_ColoredPlayerText + ": " + tankData.Value.m_TankManager.m_Wins + " WINS\n";
             }
 
             // If there is a game winner, change the entire message to reflect that.
@@ -249,24 +255,32 @@ namespace Complete
         // This function is used to turn all the tanks back on and reset their positions and properties.
         private void ResetAllTanks()
         {
-            foreach (var tankData in m_Tanks)
+            foreach (var tankData in g_OtherPlayers)
             {
-                tankData.Value.Reset();
+                tankData.Value.m_TankManager.Reset();
             }
             
-            m_PlayerTank.Reset();
+            g_MainPlayer.m_TankManager.Reset();
         }
 
 
         private void EnableTankControl()
         {
-            m_PlayerTank.EnableControl();
+            g_MainPlayer.m_TankManager.EnableControl();
+            foreach (var tankData in g_OtherPlayers)
+            {
+                tankData.Value.m_TankManager.EnableControl();
+            }
         }
 
 
         private void DisableTankControl()
         {
-            m_PlayerTank.DisableControl();
+            g_MainPlayer.m_TankManager.DisableControl();
+            foreach (var tankData in g_OtherPlayers)
+            {
+                tankData.Value.m_TankManager.DisableControl();
+            }
         }
     }
 }
