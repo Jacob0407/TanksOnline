@@ -23,7 +23,7 @@ class SpaceRoom(KBEngine.Space):
 			# 从大厅进入战场
 			# 先从大厅离开
 			avatar_entity_call.curHallSpace.leave(avatar_entity_call.id)
-			avatar_entity_call.cell.onTeleportSpaceCB(self, self.cell, (0, 0, 0), (0, 0, 0))
+			avatar_entity_call.cell.onTeleportSpaceCB(self, self.cell, avatar_entity_call.born_position, (0, 0, 0))
 
 		self._avatar_dict[avatar_entity_call.id] = avatar_entity_call
 

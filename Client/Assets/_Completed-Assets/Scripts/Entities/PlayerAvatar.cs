@@ -35,6 +35,6 @@ public class PlayerAvatar : PlayerAvatarBase
         if (this.isPlayer())
             GameManager.g_MainPlayer = this;
         else
-            GameManager.g_OtherPlayers.Add(this.id, this);
+            GameManager.g_OtherPlayers[this.id] = this;
     }
 }

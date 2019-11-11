@@ -127,6 +127,8 @@ namespace Complete
             if (m_PlayerNumber != 1)
             {
                 var avatar = GameManager.g_OtherPlayers[m_PlayerNumber];
+                //float ratio = m_Speed * Time.deltaTime / Vector3.Distance(avatar.position, m_Rigidbody.position);
+
                 m_Rigidbody.MovePosition(avatar.position);
             }
             else
@@ -134,7 +136,9 @@ namespace Complete
                 Vector3 movement = transform.forward * m_MovementInputValue * m_Speed * Time.deltaTime;
 
                 m_Rigidbody.MovePosition(m_Rigidbody.position + movement);
-                GameManager.g_MainPlayer.position = m_Rigidbody.position;
+                GameManager.g_MainPlayer.position.x = m_Rigidbody.position.x;
+                GameManager.g_MainPlayer.position.y = m_Rigidbody.position.y;
+                GameManager.g_MainPlayer.position.z = m_Rigidbody.position.z;
             }
         }
 
