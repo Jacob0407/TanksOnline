@@ -132,7 +132,7 @@ namespace Complete
             if (curValue < shadowValue)
             {
                 // 大于一定阈值，加速
-                if (deltaValue > m_Speed * 5 * deltaTime)
+                if (deltaValue > m_Speed * 30 * deltaTime)
                     ratio = 2;
                 
                 curValue += Mathf.Min(deltaValue, m_Speed * deltaTime * ratio);
@@ -163,9 +163,7 @@ namespace Complete
                 Vector3 movement = transform.forward * m_MovementInputValue * m_Speed * Time.deltaTime;
 
                 m_Rigidbody.MovePosition(m_Rigidbody.position + movement);
-                GameManager.g_MainPlayer.position.x = m_Rigidbody.position.x;
-                GameManager.g_MainPlayer.position.y = m_Rigidbody.position.y;
-                GameManager.g_MainPlayer.position.z = m_Rigidbody.position.z;
+                GameManager.g_MainPlayer.position = m_Rigidbody.position;
             }
         }
 
@@ -174,7 +172,8 @@ namespace Complete
         {
             if (m_PlayerNumber != 1)
             {
-
+                PlayerAvatar avatar = GameManager.g_OtherPlayers[m_PlayerNumber];
+                m_Rigidbody.MoveRotation(Quaternion.Euler(avatar.direction));
             }
             else
             {
@@ -183,6 +182,7 @@ namespace Complete
                 Quaternion turnRotation = Quaternion.Euler(0f, turn, 0f);
 
                 m_Rigidbody.MoveRotation(m_Rigidbody.rotation * turnRotation);
+                GameManager.g_MainPlayer.direction = m_Rigidbody.rotation.eulerAngles;
             }
         }
     }

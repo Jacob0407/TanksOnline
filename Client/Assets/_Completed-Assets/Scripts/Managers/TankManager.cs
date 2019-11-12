@@ -56,6 +56,9 @@ namespace Complete
         // Used during the phases of the game where the player shouldn't be able to control their tank.
         public void DisableControl ()
         {
+            if (!m_Movement || !m_Shooting || !m_CanvasGameObject)
+                return;
+
             m_Movement.enabled = false;
             m_Shooting.enabled = false;
 
@@ -66,6 +69,9 @@ namespace Complete
         // Used during the phases of the game where the player should be able to control their tank.
         public void EnableControl ()
         {
+            if (!m_Movement || !m_Shooting || !m_CanvasGameObject)
+                return;
+
             m_Movement.enabled = true;
             m_Shooting.enabled = true;
 
@@ -76,8 +82,8 @@ namespace Complete
         // Used at the start of each round to put the tank into it's default state.
         public void Reset ()
         {
-            //m_Instance.transform.position = m_SpawnPoint.position;
-            //m_Instance.transform.rotation = m_SpawnPoint.rotation;
+            if (!m_Instance)
+                return;
 
             m_Instance.SetActive (false);
             m_Instance.SetActive (true);
