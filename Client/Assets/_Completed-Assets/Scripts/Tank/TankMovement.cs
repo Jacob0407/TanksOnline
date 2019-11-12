@@ -121,15 +121,42 @@ namespace Complete
             Turn ();
         }
 
+        // 影子追随
+        private float CalcNewValueByShadow(float curValue, float shadowValue, float deltaTime)
+        {
+            if (curValue == shadowValue)
+                return curValue;
+
+            float deltaValue = Mathf.Abs(curValue - shadowValue);
+            int ratio = 1;
+            if (curValue < shadowValue)
+            {
+                // 大于一定阈值，加速
+                if (deltaValue > m_Speed * 5 * deltaTime)
+                    ratio = 2;
+                
+                curValue += Mathf.Min(deltaValue, m_Speed * deltaTime * ratio);
+            }
+            else
+            {
+                if (deltaValue > m_Speed * 5 * deltaTime)
+                    ratio = 2;
+
+                curValue -= Mathf.Min(deltaValue, m_Speed * deltaTime * ratio);
+            }
+
+            return curValue;
+        }
 
         private void Move ()
         {
             if (m_PlayerNumber != 1)
-            {
-                var avatar = GameManager.g_OtherPlayers[m_PlayerNumber];
-                //float ratio = m_Speed * Time.deltaTime / Vector3.Distance(avatar.position, m_Rigidbody.position);
-
-                m_Rigidbody.MovePosition(avatar.position);
+            {   
+                PlayerAvatar avatar = GameManager.g_OtherPlayers[m_PlayerNumber];
+                float newX = CalcNewValueByShadow(m_Rigidbody.position.x, avatar.position.x, Time.deltaTime);
+                float newZ = CalcNewValueByShadow(m_Rigidbody.position.z, avatar.position.z, Time.deltaTime);
+                
+                m_Rigidbody.MovePosition(new Vector3(newX, avatar.position.y, newZ));
             }
             else
             {
