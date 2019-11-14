@@ -17,6 +17,7 @@ public class PlayerAvatar : PlayerAvatarBase
 
     public override void onEnterBattleRoom(AVATAR_INFO_LIST allAvatarInfo)
     {
+        Dbg.INFO_MSG("PlayerAvatar::onEnterBattleRoom");
         GameManager.SetAllAvatarBaseInfo(allAvatarInfo);
         SceneManager.LoadScene("MainGame");
     }
@@ -32,9 +33,15 @@ public class PlayerAvatar : PlayerAvatarBase
 
     public override void onEnterWorld()
     {
+        Dbg.INFO_MSG("EnterWorld, " + KBEngineApp.app.spaceID);
         if (this.isPlayer())
             GameManager.g_MainPlayer = this;
         else
             GameManager.g_OtherPlayers[this.id] = this;
+    }
+
+    public override void onEnterSpace()
+    {
+        Dbg.INFO_MSG("onEnterSpace, " + KBEngineApp.app.spaceID);
     }
 }

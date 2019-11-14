@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using KBEngine;
 
 namespace Complete
 {
@@ -132,7 +133,7 @@ namespace Complete
             if (curValue < shadowValue)
             {
                 // 大于一定阈值，加速
-                if (deltaValue > m_Speed * 30 * deltaTime)
+                if (deltaValue > m_Speed * 40 * deltaTime)
                     ratio = 2;
                 
                 curValue += Mathf.Min(deltaValue, m_Speed * deltaTime * ratio);

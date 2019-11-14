@@ -29,8 +29,8 @@ class PlayerAvatar(KBEngine.Entity):
 		"""
 		DEBUG_MSG("PlayerAvatar::onTeleportSuccess: %s, %s" % (space_room, space_room.get_all_avatar_info()))
 
-		data = space_room.get_all_avatar_info()
-		self.client.onEnterBattleRoom(data)
+		space_room.on_enter(self)
+
 
 
 
