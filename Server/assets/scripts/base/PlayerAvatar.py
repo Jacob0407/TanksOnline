@@ -2,8 +2,6 @@
 
 import KBEngine
 from KBEDebug import *
-from IdManager import IDManager
-from consts import SpaceType
 
 
 class PlayerAvatar(KBEngine.Proxy):
@@ -13,16 +11,21 @@ class PlayerAvatar(KBEngine.Proxy):
 		self.battleSpaceID = 0  # 所在的战场spaceid
 		self.born_position = None  # 出生的坐标
 		self.born_yaw = 0  # 出生时的yaw值
-		WARNING_MSG("PlayerAvatar::base::init")
 
-	@property
-	def curHallSpace(self):
-		return KBEngine.entities.get(self.hallSpaceID, None) if self.hallSpaceID else None
+		self.space_mgr = KBEngine.globalData["SpaceMgr"]
+
+		INFO_MSG("[PlayerAvatar], init success.")
+
+	def ready_enter_game_hall(self):
+		"""
+		准备进入游戏大厅，只在第一次连接游戏时调用
+		:return:
+		"""
+		game_hall_cell = self.space_mgr.game_hall.cell
+		self.createCellEntity(game_hall_cell)
 
 	def onClientEnabled(self):
-		INFO_MSG("PlayerAvatar::onClientEnabled, ready to enter space")
-		spaceMgr = KBEngine.globalData['SpaceMgr']
-		spaceMgr and spaceMgr.enterSpace({self}, SpaceType.SPACE_TYPE_HALL)
+		INFO_MSG("[PlayerAvatar], onClientEnabled, ready to enter game hall")
 
 	def onGetCell(self):
 		"""
@@ -30,23 +33,22 @@ class PlayerAvatar(KBEngine.Proxy):
 		entity的cell部分实体被创建成功
 		"""
 		DEBUG_MSG('PlayerAvatar::onGetCell: %s' % self.cell)
+		# 真正进入大厅
+		self.space_mgr.enter_game_hall(self)
 
 	def destroySelf(self):
 		"""
 		"""
 		DEBUG_MSG("PlayerAvatar::destroySelf: %s" % self.cell)
 
-	def onEnterSpace(self, _spaceID, _spaceType):
-		if _spaceType == SpaceType.SPACE_TYPE_HALL:
-			self.hallSpaceID = _spaceID
-		elif _spaceType == SpaceType.SPACE_TYPE_BATTLE:
-			self.battleSpaceID = _spaceID
-
-		INFO_MSG("[PlayerAvatar], %s, enter space:%s.%s" % (self, _spaceID, _spaceType))
+	def onEnterSpace(self, _spaceID):
+		INFO_MSG("[PlayerAvatar], %s, enter space:%s" % (self, _spaceID))
 
 	def reqMatch(self):
 		INFO_MSG("[PlayerAvatar], %s, reqMatch" % (self.id))
-		self.curHallSpace and self.curHallSpace.avatarReqMatch(self.id)
+
+		match_stub = KBEngine.globalData["MatchStub"]
+		match_stub and match_stub.begin_match(self.id)
 
 	# --------------------------------------------------------------------------------------------
 	#                              Callbacks

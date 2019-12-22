@@ -1,0 +1,19 @@
+<root>
+    <Properties>
+        <avatar_info>
+            <Type> PY_DICT </Type>
+            <Flags> CELL_PRIVATE </Flags>
+        </avatar_info>
+	</Properties>
+
+    <!-- BaseApp上的远程方法 -->
+    <BaseMethods>
+    </BaseMethods>
+
+    <!-- CellApp上的远程方法 -->
+    <CellMethods>
+        <leave>
+			<Arg>		ENTITY_ID		</Arg>
+		</leave>
+    </CellMethods>
+</root>

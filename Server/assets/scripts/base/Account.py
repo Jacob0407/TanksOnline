@@ -32,6 +32,7 @@ class Account(KBEngine.Proxy):
 		客户端登陆失败时会回调到这里
 		"""
 		INFO_MSG(ip, port, password)
+		INFO_MSG("Account[%i]::onLogOnAttempt: ip=%s, port=%i, selfclient=%s" % (self.id, ip, port, self.client))
 		return KBEngine.LOG_ON_ACCEPT
 		
 	def onClientDeath(self):
@@ -51,9 +52,10 @@ class Account(KBEngine.Proxy):
 		:return:
 		"""
 
-		avatar = KBEngine.createEntityLocally('PlayerAvatar', {})
+		avatar = KBEngine.createEntityLocally("PlayerAvatar", {})
 		if avatar:
 			DEBUG_MSG("Account[%i].becomePlayerAvatar\n" % self.id)
 			self.activeAvatar = avatar
 			self.giveClientTo(self.activeAvatar)
+			avatar.ready_enter_game_hall()
 

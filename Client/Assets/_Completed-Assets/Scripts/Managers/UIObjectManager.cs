@@ -1,30 +1,26 @@
-﻿using KBEngine;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEditor;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using KBEngine;
 
-public class UIEventControl : MonoBehaviour
+public class UIObjectManager : MonoBehaviour
 {
+    #region 登录界面相关UI组件
     public GameObject loginAccount;
     public GameObject loginPwd;
+    #endregion
 
-    // Start is called before the first frame update
-    void Start()
+    #region 匹配界面相关UI组件
+    public GameObject matchPlayerNum;
+    #endregion
+
+    public void Start()
     {
-        
+        UIManager.Instance.resetData();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    /// <summary>
-    /// 登录按钮触发事件
-    /// </summary>
-    public void OnLoginClick()
+    public void loginClick()
     {
         if (loginAccount == null || loginPwd == null)
         {
@@ -44,5 +40,15 @@ public class UIEventControl : MonoBehaviour
         Debug.Log("login, account: " + account + "pwd: " + pwd);
 
         KBEngineApp.app.login(account, pwd, System.Text.Encoding.UTF8.GetBytes("kbengine_unity3d_demo"));
+    }
+
+    public bool showMatchInfo(string matchInfo)
+    {
+        if (matchPlayerNum == null)
+            return false;
+
+        matchPlayerNum.GetComponent<Text>().text = matchInfo;
+
+        return true;
     }
 }

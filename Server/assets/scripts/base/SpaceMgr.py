@@ -2,7 +2,7 @@
 
 import KBEngine
 from KBEDebug import *
-from AVATAR_INFO import TAvatarInfo
+from consts import SpaceType
 
 
 class SpaceMgr(KBEngine.Entity):
@@ -10,34 +10,51 @@ class SpaceMgr(KBEngine.Entity):
 	def __init__(self):
 		KBEngine.Entity.__init__(self)
 
-		self._spaceUtypeDict = {}
-		self._spaces = {}
+		self._spaces = {}  # space_type: [space_id]
 
 		KBEngine.globalData["SpaceMgr"] = self
 
-	def enterSpace(self, avatarEntityCallSet, spaceUtype, avatarInfo={}):
+		self._game_hall = None
+
+	@property
+	def game_hall(self):
+		if self._game_hall:
+			return self._game_hall
+
+		space_id_list = self._spaces.get(SpaceType.SPACE_TYPE_HALL, list())
+		if space_id_list is None:
+			return None
+
+		self._game_hall = KBEngine.entities.get(space_id_list[0], None)
+
+		return self._game_hall
+
+	def enter_game_hall(self, entity_call):
 		"""
-		一群玩家进入某个space
-		:param avatarEntityCallSet: 玩家的entitycall的集合
-		:param spaceUtype: 请求进入的空间类型
+		进入游戏大厅
+		:param entity_call:
 		:return:
 		"""
-
-		space = self._spaceUtypeDict.get(spaceUtype, None)
-		if not space:
-			INFO_MSG("[Space], avatars:%s enter space error, space_type:%i, avatar_info:%s" % (avatarEntityCallSet, spaceUtype, avatarInfo))
-
-			new_space = KBEngine.createEntityLocally("SpaceRoom", {'uType': spaceUtype, 'room_type': spaceUtype, 'avatar_info': avatarInfo})  # 创建space
-			if not new_space:
-				return
-
-			for avatarEntityCall in avatarEntityCallSet:
-				new_space.addWaitToEnter(avatarEntityCall)
-
+		if self.game_hall is None:
+			ERROR_MSG("[SpaceMgr], game hall is None")
 			return
 
-		for avatarEntityCall in avatarEntityCallSet:
-			space.enter(avatarEntityCall)
+		INFO_MSG("[SpaceMgr], %s ready enter game hall:%s" % (entity_call, self.game_hall))
+		self.game_hall.enter(entity_call)
+
+	def enter_game_battle_space(self, entity_call_set, avatar_info):
+		"""
+		一群玩家进入游戏战场
+		:param entity_call_set:
+		:param avatar_info:
+		:return:
+		"""
+		battle_space = KBEngine.createEntityLocally("GameBattleSpace", {'avatar_info': avatar_info})
+		if not battle_space:
+			return
+
+		for entity_call in entity_call_set:
+			battle_space.add_entity_to_wait_list(entity_call.id)
 
 	def leaveSpace(self, avatarId, spaceKey):
 		"""
@@ -52,21 +69,17 @@ class SpaceMgr(KBEngine.Entity):
 
 		space.leave(avatarId)
 
-	def onSpaceGetCell(self, key, spaceUtype, spaceEntityCall):
+	def on_space_get_cell(self, space_type, space_entity_id):
 		"""
-		space在cell上成功创建后
-		:param key:
-		:param spaceUtype:
-		:param spaceEntityCall:
+		space在cell上成功创建后进行注册
+		:param space_type:
+		:param space_entity_id:
 		:return:
 		"""
+		if space_type not in self._spaces:
+			self._spaces[space_type] = list()
 
-		DEBUG_MSG("[Space], onSpaceGetCell, key:%s, type:%s, call:%s" % (key, spaceUtype, spaceEntityCall))
-		self._spaceUtypeDict[spaceUtype] = spaceEntityCall
-		self._spaces[key] = spaceEntityCall
+		self._spaces[space_type].append(space_entity_id)
 
-	def onSpaceLoseCell(self, key, uType):
-		DEBUG_MSG("[Space], onSpaceLoseCell, key:%s, type:%s" % (key, type))
-
-		del self._spaceUtypeDict[uType]
-		del self._spaces[key]
+	def on_space_lose_cell(self, key, uType):
+		pass

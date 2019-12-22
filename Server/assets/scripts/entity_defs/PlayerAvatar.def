@@ -7,13 +7,13 @@
         <onEnter>
         </onEnter>
 
-        <onMatch>
-            <Arg>   UINT32         </Arg>        <!--当前处于匹配的第几位-->
-        </onMatch>
-
-        <onEnterBattleRoom>
+        <enterBattleSpace>
             <Arg> AVATAR_INFO_LIST </Arg>
-        </onEnterBattleRoom>
+        </enterBattleSpace>
+
+        <notify_match_info>
+            <Arg>  UINT8  </Arg>          <!--匹配信息--->
+        </notify_match_info>
 	</ClientMethods>
 
 	<BaseMethods>
@@ -23,12 +23,11 @@
 	</BaseMethods>
 
 	<CellMethods>
-	    <onTeleportSpaceCB>
-			<Arg>		ENTITYCALL		</Arg>
+		<teleport_space>
 			<Arg>		ENTITYCALL		</Arg>
 			<Arg>		POSITION3D		</Arg>
 			<Arg>		DIRECTION3D		</Arg>
-		</onTeleportSpaceCB>
+		</teleport_space>
 
 	</CellMethods>
 

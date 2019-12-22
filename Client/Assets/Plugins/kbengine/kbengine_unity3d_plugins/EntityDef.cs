@@ -185,12 +185,42 @@ namespace KBEngine
 
 			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), property(spaceID / 40002).");
 
+			List<DATATYPE_BASE> pPlayerAvatar_enterBattleSpace_args = new List<DATATYPE_BASE>();
+			pPlayerAvatar_enterBattleSpace_args.Add(EntityDef.id2datatypes[23]);
+
+			Method pPlayerAvatar_enterBattleSpace = new Method();
+			pPlayerAvatar_enterBattleSpace.name = "enterBattleSpace";
+			pPlayerAvatar_enterBattleSpace.methodUtype = 5;
+			pPlayerAvatar_enterBattleSpace.aliasID = 1;
+			pPlayerAvatar_enterBattleSpace.args = pPlayerAvatar_enterBattleSpace_args;
+
+			pPlayerAvatarModule.methods["enterBattleSpace"] = pPlayerAvatar_enterBattleSpace; 
+			pPlayerAvatarModule.useMethodDescrAlias = true;
+			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_enterBattleSpace.aliasID] = pPlayerAvatar_enterBattleSpace;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(enterBattleSpace / 5).");
+
+			List<DATATYPE_BASE> pPlayerAvatar_notify_match_info_args = new List<DATATYPE_BASE>();
+			pPlayerAvatar_notify_match_info_args.Add(EntityDef.id2datatypes[2]);
+
+			Method pPlayerAvatar_notify_match_info = new Method();
+			pPlayerAvatar_notify_match_info.name = "notify_match_info";
+			pPlayerAvatar_notify_match_info.methodUtype = 6;
+			pPlayerAvatar_notify_match_info.aliasID = 2;
+			pPlayerAvatar_notify_match_info.args = pPlayerAvatar_notify_match_info_args;
+
+			pPlayerAvatarModule.methods["notify_match_info"] = pPlayerAvatar_notify_match_info; 
+			pPlayerAvatarModule.useMethodDescrAlias = true;
+			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_notify_match_info.aliasID] = pPlayerAvatar_notify_match_info;
+
+			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(notify_match_info / 6).");
+
 			List<DATATYPE_BASE> pPlayerAvatar_onEnter_args = new List<DATATYPE_BASE>();
 
 			Method pPlayerAvatar_onEnter = new Method();
 			pPlayerAvatar_onEnter.name = "onEnter";
 			pPlayerAvatar_onEnter.methodUtype = 4;
-			pPlayerAvatar_onEnter.aliasID = 1;
+			pPlayerAvatar_onEnter.aliasID = 3;
 			pPlayerAvatar_onEnter.args = pPlayerAvatar_onEnter_args;
 
 			pPlayerAvatarModule.methods["onEnter"] = pPlayerAvatar_onEnter; 
@@ -198,36 +228,6 @@ namespace KBEngine
 			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_onEnter.aliasID] = pPlayerAvatar_onEnter;
 
 			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onEnter / 4).");
-
-			List<DATATYPE_BASE> pPlayerAvatar_onEnterBattleRoom_args = new List<DATATYPE_BASE>();
-			pPlayerAvatar_onEnterBattleRoom_args.Add(EntityDef.id2datatypes[23]);
-
-			Method pPlayerAvatar_onEnterBattleRoom = new Method();
-			pPlayerAvatar_onEnterBattleRoom.name = "onEnterBattleRoom";
-			pPlayerAvatar_onEnterBattleRoom.methodUtype = 6;
-			pPlayerAvatar_onEnterBattleRoom.aliasID = 2;
-			pPlayerAvatar_onEnterBattleRoom.args = pPlayerAvatar_onEnterBattleRoom_args;
-
-			pPlayerAvatarModule.methods["onEnterBattleRoom"] = pPlayerAvatar_onEnterBattleRoom; 
-			pPlayerAvatarModule.useMethodDescrAlias = true;
-			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_onEnterBattleRoom.aliasID] = pPlayerAvatar_onEnterBattleRoom;
-
-			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onEnterBattleRoom / 6).");
-
-			List<DATATYPE_BASE> pPlayerAvatar_onMatch_args = new List<DATATYPE_BASE>();
-			pPlayerAvatar_onMatch_args.Add(EntityDef.id2datatypes[4]);
-
-			Method pPlayerAvatar_onMatch = new Method();
-			pPlayerAvatar_onMatch.name = "onMatch";
-			pPlayerAvatar_onMatch.methodUtype = 5;
-			pPlayerAvatar_onMatch.aliasID = 3;
-			pPlayerAvatar_onMatch.args = pPlayerAvatar_onMatch_args;
-
-			pPlayerAvatarModule.methods["onMatch"] = pPlayerAvatar_onMatch; 
-			pPlayerAvatarModule.useMethodDescrAlias = true;
-			pPlayerAvatarModule.idmethods[(UInt16)pPlayerAvatar_onMatch.aliasID] = pPlayerAvatar_onMatch;
-
-			//Dbg.DEBUG_MSG("EntityDef::initScriptModules: add(PlayerAvatar), method(onMatch / 5).");
 
 			List<DATATYPE_BASE> pPlayerAvatar_reqMatch_args = new List<DATATYPE_BASE>();
 

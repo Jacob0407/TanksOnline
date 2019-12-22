@@ -5,20 +5,19 @@ from KBEDebug import *
 from AVATAR_INFO import TAvatarInfoList, TAvatarInfo
 
 
-class SpaceRoom(KBEngine.Space):
+class GameBattleSpace(KBEngine.Space):
 	def __init__(self):
 		KBEngine.Space.__init__(self)
-		DEBUG_MSG('SpaceRoom::init, room_type= %i, avatar_info:%s ' % (self.room_type, self.avatar_info))
-		self._all_avatar_entity = {}
 
-	def on_enter(self, entity):
-		DEBUG_MSG("SpaceRoom::on_enter")
-		self._all_avatar_entity[entity.id] = entity
-		if len(self._all_avatar_entity) < len(self.avatar_info):
-			return
+		self._avatar_set = set()
 
-		for _, entity in self._all_avatar_entity.items():
-			entity.client.onEnterBattleRoom(self.get_all_avatar_info())
+		INFO_MSG("[GameBattleSpace], %s init game battle space succ." % self.id)
+
+	def enter(self, entity):
+		INFO_MSG("[GameBattleSpace], %s , entity: %s enter space." % (self.id, entity))
+
+		self._avatar_set.add(entity.id)
+		entity.client.enterBattleSpace(self.get_all_avatar_info())
 
 	def leave(self, entityID):
 		"""

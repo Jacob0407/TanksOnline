@@ -1,0 +1,10 @@
+<root>
+
+    <!-- BaseApp上的远程方法 -->
+    <BaseMethods>
+        <begin_match>
+            <Arg> ENTITY_ID </Arg>
+        </begin_match>
+    </BaseMethods>
+
+</root>

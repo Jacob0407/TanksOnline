@@ -15,6 +15,8 @@ def onBaseAppReady(isBootstrap):
 
 	if isBootstrap:
 		KBEngine.createEntityLocally("SpaceMgr", {})  # 创建全局的space管理器
+		KBEngine.createEntityLocally("MatchStub", {})  # 创建匹配Stub
+		KBEngine.createEntityLocally("GameHall", {})  # 创建游戏大厅
 
 def onReadyForLogin(isBootstrap):
 	"""

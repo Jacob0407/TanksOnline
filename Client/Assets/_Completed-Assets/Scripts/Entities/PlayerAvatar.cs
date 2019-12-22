@@ -15,22 +15,6 @@ public class PlayerAvatar : PlayerAvatarBase
         this.baseEntityCall.reqMatch();
     }
 
-    public override void onEnterBattleRoom(AVATAR_INFO_LIST allAvatarInfo)
-    {
-        Dbg.INFO_MSG("PlayerAvatar::onEnterBattleRoom");
-        GameManager.SetAllAvatarBaseInfo(allAvatarInfo);
-        SceneManager.LoadScene("MainGame");
-    }
-
-    public override void onMatch(uint curNum)
-    {
-        Dbg.INFO_MSG("PlayerAvatar::onMatch" + curNum);
-        if (firstMatch)
-            SceneManager.LoadScene("Match");
-        else
-            firstMatch = false;
-    }
-
     public override void onEnterWorld()
     {
         Dbg.INFO_MSG("EnterWorld, " + KBEngineApp.app.spaceID);
@@ -43,5 +27,24 @@ public class PlayerAvatar : PlayerAvatarBase
     public override void onEnterSpace()
     {
         Dbg.INFO_MSG("onEnterSpace, " + KBEngineApp.app.spaceID);
+    }
+
+    public override void enterBattleSpace(AVATAR_INFO_LIST allAvatarInfo)
+    {
+        Dbg.INFO_MSG("PlayerAvatar::enterBattleSpace");
+        GameManager.SetAllAvatarBaseInfo(allAvatarInfo);
+        SceneManager.LoadScene("MainGame");
+    }
+
+    public override void notify_match_info(byte curNum)
+    {
+        Dbg.INFO_MSG("PlayerAvatar::onMatch" + curNum);
+
+        if (firstMatch)
+            SceneManager.LoadScene("Match");
+        else
+            firstMatch = false;
+
+        KBEngine.Event.fireOut("OnMatchNumChange", new object[] { curNum });
     }
 }

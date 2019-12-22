@@ -7,7 +7,9 @@
 
 	<!-- <Avatar/> -->
 	<Account hasClient="true"></Account><!-- <Account hasCell="true" hasBase="true" hasClient="true"></Account> -->
-	<PlayerAvatar hasClient="true"></PlayerAvatar>
-	<SpaceRoom></SpaceRoom>
+	<PlayerAvatar hasClient="true" hasCell="true"></PlayerAvatar>
+	<GameHall></GameHall>
+	<MatchStub></MatchStub>
+	<GameBattleSpace></GameBattleSpace>
 	<SpaceMgr></SpaceMgr>
 </root>
