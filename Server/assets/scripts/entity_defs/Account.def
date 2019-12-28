@@ -6,9 +6,6 @@
 	</ClientMethods>
 
 	<BaseMethods>
-	    <reqMatch>
-	        <Exposed/>
-        </reqMatch>
 	</BaseMethods>
 
 	<CellMethods>

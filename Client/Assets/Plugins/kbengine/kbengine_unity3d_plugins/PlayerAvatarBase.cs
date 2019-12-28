@@ -20,7 +20,7 @@ namespace KBEngine
 		public EntityCellEntityCall_PlayerAvatarBase cellEntityCall = null;
 
 
-		public abstract void enterBattleSpace(AVATAR_INFO_LIST arg1); 
+		public abstract void enterBattleSpace(); 
 		public abstract void notify_match_info(Byte arg1); 
 		public abstract void onEnter(); 
 
@@ -91,15 +91,14 @@ namespace KBEngine
 
 			switch(method.methodUtype)
 			{
-				case 5:
-					AVATAR_INFO_LIST enterBattleSpace_arg1 = ((DATATYPE_AVATAR_INFO_LIST)method.args[0]).createFromStreamEx(stream);
-					enterBattleSpace(enterBattleSpace_arg1);
+				case 4:
+					enterBattleSpace();
 					break;
-				case 6:
+				case 5:
 					Byte notify_match_info_arg1 = stream.readUint8();
 					notify_match_info(notify_match_info_arg1);
 					break;
-				case 4:
+				case 3:
 					onEnter();
 					break;
 				default:

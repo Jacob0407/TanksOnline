@@ -29,10 +29,9 @@ public class PlayerAvatar : PlayerAvatarBase
         Dbg.INFO_MSG("onEnterSpace, " + KBEngineApp.app.spaceID);
     }
 
-    public override void enterBattleSpace(AVATAR_INFO_LIST allAvatarInfo)
+    public override void enterBattleSpace()
     {
         Dbg.INFO_MSG("PlayerAvatar::enterBattleSpace");
-        GameManager.SetAllAvatarBaseInfo(allAvatarInfo);
         SceneManager.LoadScene("MainGame");
     }
 

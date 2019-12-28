@@ -58,7 +58,6 @@ class MatchStub(KBEngine.Entity):
 
 		INFO_MSG("[MatchStub], match success.")
 
-		avatar_info = dict()
 		index = 0
 		_readyAvatarSet = set()
 		for _ava_id in self._wait_match_set:
@@ -70,11 +69,8 @@ class MatchStub(KBEngine.Entity):
 			_avatar.born_yaw = BornYaw[index]
 			_readyAvatarSet.add(_avatar)
 			index = index + 1  # noqa
-			avatar_info[_avatar.id] = dict()
-			avatar_info[_avatar.id]["born_position"] = _avatar.born_position
-			avatar_info[_avatar.id]["born_yaw"] = _avatar.born_yaw
 
-		self.space_mgr.enter_game_battle_space(_readyAvatarSet, avatar_info)
+		self.space_mgr.enter_game_battle_space(_readyAvatarSet)
 
 		# 匹配数据清空，完成一次匹配
 		self._wait_match_set = set()

@@ -1,9 +1,5 @@
 <root>
     <Properties>
-        <avatar_info>
-            <Type> PY_DICT </Type>
-            <Flags> CELL_PRIVATE </Flags>
-        </avatar_info>
 	</Properties>
 
     <!-- BaseApp上的远程方法 -->

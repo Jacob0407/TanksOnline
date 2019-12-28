@@ -42,14 +42,14 @@ class SpaceMgr(KBEngine.Entity):
 		INFO_MSG("[SpaceMgr], %s ready enter game hall:%s" % (entity_call, self.game_hall))
 		self.game_hall.enter(entity_call)
 
-	def enter_game_battle_space(self, entity_call_set, avatar_info):
+	def enter_game_battle_space(self, entity_call_set):
 		"""
 		一群玩家进入游戏战场
 		:param entity_call_set:
 		:param avatar_info:
 		:return:
 		"""
-		battle_space = KBEngine.createEntityLocally("GameBattleSpace", {'avatar_info': avatar_info})
+		battle_space = KBEngine.createEntityLocally("GameBattleSpace", {})
 		if not battle_space:
 			return
 

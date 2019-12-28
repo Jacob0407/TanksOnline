@@ -17,7 +17,7 @@ class GameBattleSpace(KBEngine.Space):
 		INFO_MSG("[GameBattleSpace], %s , entity: %s enter space." % (self.id, entity))
 
 		self._avatar_set.add(entity.id)
-		entity.client.enterBattleSpace(self.get_all_avatar_info())
+		entity.client.enterBattleSpace()
 
 	def leave(self, entityID):
 		"""
@@ -26,20 +26,5 @@ class GameBattleSpace(KBEngine.Space):
 		"""
 		DEBUG_MSG('Space::onLeave space entityID = %i.' % (entityID))
 
-	def get_all_avatar_info(self):
-		"""
-		获得房间内所有玩家的信息
-		:return: dict()
-		"""
-
-		DEBUG_MSG("Space::Room get_all_avatar_info, info:%s" % (self.avatar_info))
-
-		avatar_info_list = TAvatarInfoList()
-		for entity_id, data in self.avatar_info.items():
-			avatar_info = TAvatarInfo()
-			avatar_info.extend([entity_id, data["born_position"], data["born_yaw"]])
-			avatar_info_list[entity_id] = avatar_info
-
-		return avatar_info_list
 
 

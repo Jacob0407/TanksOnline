@@ -8,7 +8,6 @@
         </onEnter>
 
         <enterBattleSpace>
-            <Arg> AVATAR_INFO_LIST </Arg>
         </enterBattleSpace>
 
         <notify_match_info>

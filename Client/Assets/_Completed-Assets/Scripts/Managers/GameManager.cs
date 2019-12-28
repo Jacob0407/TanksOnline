@@ -25,7 +25,6 @@ namespace Complete
         private WaitForSeconds m_EndWait;           // Used to have a delay whilst the round or game ends.
         private TankManager m_RoundWinner;          // Reference to the winner of the current round.  Used to make an announcement of who won.
         private TankManager m_GameWinner;           // Reference to the winner of the game.  Used to make an announcement of who won.
-        private static AVATAR_INFO_LIST m_allAvatarBaseInfo;        // 所有玩家的基本数据
 
         private void Start()
         {
@@ -33,11 +32,6 @@ namespace Complete
             m_StartWait = new WaitForSeconds (m_StartDelay);
             m_EndWait = new WaitForSeconds (m_EndDelay);
             EnterBattleGame();
-        }
-
-        public static void SetAllAvatarBaseInfo(AVATAR_INFO_LIST data)
-        {
-            m_allAvatarBaseInfo = data;
         }
 
         public void EnterBattleGame()
@@ -52,31 +46,24 @@ namespace Complete
 
         private void SpawnAllTanks()
         {
-            foreach (var avatar in m_allAvatarBaseInfo.values)
+            // 主客户端
+            if (g_MainPlayer != null)
             {
-                if (g_MainPlayer.id == avatar.entity_id)
-                {
-                    if (g_MainPlayer == null)
-                        continue;
+                g_MainPlayer.m_TankManager.m_Instance = Instantiate(m_TankPrefab, g_MainPlayer.position, Quaternion.Euler(g_MainPlayer.direction)) as GameObject;
+                g_MainPlayer.m_TankManager.m_PlayerNumber = 1;
+                g_MainPlayer.m_TankManager.Setup();
+            }
 
-                    // 主客户端
-                    g_MainPlayer.m_TankManager.m_Instance = Instantiate(m_TankPrefab, avatar.born_position, new Quaternion(0, avatar.born_yaw, 0, 0)) as GameObject;
-                    g_MainPlayer.m_TankManager.m_PlayerNumber = 1;
-                    g_MainPlayer.m_TankManager.Setup();
-                }
-                else
+            // 其他客户端
+            foreach (var avatar in g_OtherPlayers.Values)
+            {
+                TankManager tank = new TankManager
                 {
-                    if (!g_OtherPlayers.ContainsKey(avatar.entity_id))
-                        continue;
-
-                    TankManager tank = new TankManager
-                    {
-                        m_Instance = Instantiate(m_TankPrefab, avatar.born_position, new Quaternion(0, avatar.born_yaw, 0, 0)) as GameObject,
-                        m_PlayerNumber = avatar.entity_id
-                    };
-                    tank.Setup();
-                    g_OtherPlayers[avatar.entity_id].m_TankManager = tank;
-                }
+                    m_Instance = Instantiate(m_TankPrefab, avatar.position, Quaternion.Euler(avatar.direction)) as GameObject,
+                    m_PlayerNumber = avatar.id
+                };
+                tank.Setup();
+                avatar.m_TankManager = tank;
             }
         }
 
@@ -84,7 +71,7 @@ namespace Complete
         private void SetCameraTargets()
         {
             // Create a collection of transforms the same size as the number of tanks.
-            Transform[] targets = new Transform[m_allAvatarBaseInfo.values.Count];
+            Transform[] targets = new Transform[g_OtherPlayers.Values.Count + 1];
 
             targets[0] = g_MainPlayer.m_TankManager.m_Instance.transform;
             int index = 1;

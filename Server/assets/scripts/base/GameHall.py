@@ -17,7 +17,7 @@ class GameHall(KBEngine.Space):
 
 		self._avatar_set.add(avatar_entity_call.id)
 
-		avatar_entity_call.onEnterSpace(self.id)
+		avatar_entity_call.on_enter_space(self.id)
 
 	def leave(self, avatar_id):
 		avatar = self._avatar_dict.get(avatar_id, None)

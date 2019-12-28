@@ -19,7 +19,7 @@ class GameBattleSpace(KBEngine.Space):
 		avatar_entity_call.cell.teleport_space(self.cell, avatar_entity_call.born_position, (0, 0, 0))
 		self._avatar_set.add(avatar_entity_call.id)
 
-		avatar_entity_call.onEnterSpace(self.id)
+		avatar_entity_call.on_enter_space(self.id)
 
 	def leave(self, avatar_id):
 		avatar = self._avatar_dict.get(avatar_id, None)
