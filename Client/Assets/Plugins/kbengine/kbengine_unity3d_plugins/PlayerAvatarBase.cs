@@ -28,6 +28,14 @@ namespace KBEngine
 		{
 		}
 
+		public override void onComponentsEnterworld()
+		{
+		}
+
+		public override void onComponentsLeaveworld()
+		{
+		}
+
 		public override void onGetBase()
 		{
 			baseEntityCall = new EntityBaseEntityCall_PlayerAvatarBase(id, className);
@@ -53,6 +61,14 @@ namespace KBEngine
 			return cellEntityCall;
 		}
 
+		public override void attachComponents()
+		{
+		}
+
+		public override void detachComponents()
+		{
+		}
+
 		public override void onRemoteMethodCall(MemoryStream stream)
 		{
 			ScriptModule sm = EntityDef.moduledefs["PlayerAvatar"];
@@ -60,14 +76,21 @@ namespace KBEngine
 			UInt16 methodUtype = 0;
 			UInt16 componentPropertyUType = 0;
 
-			if(sm.useMethodDescrAlias)
+			if(sm.usePropertyDescrAlias)
 			{
 				componentPropertyUType = stream.readUint8();
-				methodUtype = stream.readUint8();
 			}
 			else
 			{
 				componentPropertyUType = stream.readUint16();
+			}
+
+			if(sm.useMethodDescrAlias)
+			{
+				methodUtype = stream.readUint8();
+			}
+			else
+			{
 				methodUtype = stream.readUint16();
 			}
 
@@ -91,14 +114,14 @@ namespace KBEngine
 
 			switch(method.methodUtype)
 			{
-				case 4:
+				case 6:
 					enterBattleSpace();
 					break;
-				case 5:
+				case 7:
 					Byte notify_match_info_arg1 = stream.readUint8();
 					notify_match_info(notify_match_info_arg1);
 					break;
-				case 3:
+				case 5:
 					onEnter();
 					break;
 				default:

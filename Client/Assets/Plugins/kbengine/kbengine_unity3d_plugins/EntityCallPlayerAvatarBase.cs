@@ -40,5 +40,14 @@ namespace KBEngine
 			type = ENTITYCALL_TYPE.ENTITYCALL_TYPE_CELL;
 		}
 
+		public void end_game()
+		{
+			Bundle pBundle = newCall("end_game", 0);
+			if(pBundle == null)
+				return;
+
+			sendCall(null);
+		}
+
 	}
 	}

@@ -28,6 +28,14 @@ class PlayerAvatar(KBEngine.Proxy):
 		game_hall_cell = self.space_mgr.game_hall.cell
 		self.createCellEntity(game_hall_cell)
 
+	def back_to_game_hall(self):
+		"""
+		从其他服返回到大厅
+		:return:
+		"""
+		self.space_mgr.leaveSpace(self.id, self.battle_space_id)
+		self.space_mgr.enter_game_hall(self)
+
 	def onClientEnabled(self):
 		INFO_MSG("[PlayerAvatar], onClientEnabled, ready to enter game hall")
 

@@ -9,7 +9,6 @@
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
-	using System.Runtime.Remoting.Messaging;
 
 	using MessageID = System.UInt16;
 	using MessageLength = System.UInt16;
@@ -111,6 +110,11 @@
 			{
 				throw new ArgumentException("invalid socket!");
 			}
+
+            if(_filter != null)
+            {
+                _filter.encrypt(stream);
+            }
 
 			nextTickKcpUpdate = 0;
 			return kcp_.Send(stream.data(), stream.rpos, (int)stream.length()) >= 0;

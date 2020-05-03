@@ -1,11 +1,11 @@
 ﻿namespace KBEngine
 {
-  	using UnityEngine; 
+	using UnityEngine; 
 	using System; 
 	using System.Collections; 
 	using System.Collections.Generic;
 	using System.Text;
-    using System.Threading;
+	using System.Threading;
 	using System.Text.RegularExpressions;
 	
 	using MessageID = System.UInt16;
@@ -26,12 +26,12 @@
 	{
 		public static KBEngineApp app = null;
 		private NetworkInterfaceBase _networkInterface = null;
-        
-        KBEngineArgs _args = null;
-        
-    	// 客户端的类别
-    	// http://www.kbengine.org/docs/programming/clientsdkprogramming.html
-    	// http://www.kbengine.org/cn/docs/programming/clientsdkprogramming.html
+		
+		KBEngineArgs _args = null;
+		
+		// 客户端的类别
+		// http://www.kbengine.org/docs/programming/clientsdkprogramming.html
+		// http://www.kbengine.org/cn/docs/programming/clientsdkprogramming.html
 		public enum CLIENT_TYPE
 		{
 			// Mobile(Phone, Pad)
@@ -55,9 +55,19 @@
 			// Mini-Client
 			CLIENT_TYPE_MINI				= 7,
 		};
-		
-        public string username = "kbengine";
-        public string password = "123456";
+
+		//加密通信类型
+		public enum NETWORK_ENCRYPT_TYPE
+		{
+			//无加密
+			ENCRYPT_TYPE_NONE = 0,
+
+			//Blowfish
+			ENCRYPT_TYPE_BLOWFISH = 1,
+		};
+
+		public string username = "kbengine";
+		public string password = "123456";
 		
 		// 服务端分配的baseapp地址
 		public string baseappIP = "";
@@ -78,11 +88,11 @@
 		
 		// 服务端与客户端的版本号以及协议MD5
 		public string serverVersion = "";
-		public string clientVersion = "2.2.4";
+		public string clientVersion = "2.5.8";
 		public string serverScriptVersion = "";
 		public string clientScriptVersion = "0.1.0";
-		public string serverProtocolMD5 = "9C1FBCD6B66D4AFE644ABEDBFAC9B95A";
-		public string serverEntitydefMD5 = "DAC71FFA0DBE77369E9217CA2F40803E";
+		public string serverProtocolMD5 = "ACE55A2934030C0DA3446BA0E5FAB5DD";
+		public string serverEntitydefMD5 = "A9E9106858D7F109E9F38038A1EAEFE6";
 		
 		// 当前玩家的实体id与实体类别
 		public UInt64 entity_uuid = 0;
@@ -114,8 +124,11 @@
 		private System.DateTime _lastUpdateToServerTime = System.DateTime.Now;
 		
 		//上传玩家信息到服务器间隔，单位毫秒
-        private float _updatePlayerToServerPeroid = 100.0f;
+		private float _updatePlayerToServerPeroid = 100.0f;
 		private const int _1MS_TO_100NS = 10000;
+
+		//加密过滤器
+		private EncryptionFilter _filter = null;
 
 		// 玩家当前所在空间的id， 以及空间对应的资源
 		public UInt32 spaceID = 0;
@@ -125,15 +138,26 @@
 		// 按照标准，每个客户端部分都应该包含这个属性
 		public const string component = "client"; 
 		
-        public KBEngineApp(KBEngineArgs args)
-        {
+		public KBEngineApp(KBEngineArgs args)
+		{
 			if (app != null)
 				throw new Exception("Only one instance of KBEngineApp!");
 			
 			app = this;
-			
+			Event.outEventsImmediately = !args.isMultiThreads;
+
 			initialize(args);
-        }
+		}
+
+		public static KBEngineApp getSingleton() 
+		{
+			if(KBEngineApp.app == null)
+			{
+				throw new Exception("Please create KBEngineApp!");
+			}
+
+			return KBEngineApp.app;
+		}
 
 		public virtual bool initialize(KBEngineArgs args)
 		{
@@ -142,29 +166,30 @@
 
 			EntityDef.init();
 
-        	initNetwork();
+			initNetwork();
 
-            // 注册事件
-            installEvents();
+			// 注册事件
+			installEvents();
 
-         	return true;
+			return true;
 		}
 		
 		void initNetwork()
 		{
+			_filter = null;
 			Messages.init();
 			_networkInterface = new NetworkInterfaceTCP();
 		}
 		
 		void installEvents()
 		{
-			Event.registerIn("createAccount", this, "createAccount");
-			Event.registerIn("login", this, "login");
-			Event.registerIn("logout", this, "logout");
-			Event.registerIn("reloginBaseapp", this, "reloginBaseapp");
-			Event.registerIn("resetPassword", this, "resetPassword");
-			Event.registerIn("bindAccountEmail", this, "bindAccountEmail");
-			Event.registerIn("newPassword", this, "newPassword");
+			Event.registerIn(EventInTypes.createAccount, this, "createAccount");
+			Event.registerIn(EventInTypes.login, this, "login");
+			Event.registerIn(EventInTypes.logout, this, "logout");
+			Event.registerIn(EventInTypes.reloginBaseapp, this, "reloginBaseapp");
+			Event.registerIn(EventInTypes.resetPassword, this, "resetPassword");
+			Event.registerIn(EventInTypes.bindAccountEmail, this, "bindAccountEmail");
+			Event.registerIn(EventInTypes.newPassword, this, "newPassword");
 			
 			// 内部事件
 			Event.registerIn("_closeNetwork", this, "_closeNetwork");
@@ -175,45 +200,45 @@
 			return _args;
 		}
 		
-        public virtual void destroy()
-        {
-        	Dbg.WARNING_MSG("KBEngine::destroy()");
-        	
+		public virtual void destroy()
+		{
+			Dbg.WARNING_MSG("KBEngine::destroy()");
+			
 			if(currserver == "baseapp")
 				logout();
 			
-        	reset();
-        	KBEngine.Event.deregisterIn(this);
-        	resetMessages();
-        	
-        	KBEngineApp.app = null;
-        }
-        
-        public NetworkInterfaceBase networkInterface()
-        {
-        	return _networkInterface;
-        }
-        
-        public byte[] serverdatas()
-        {
-        	return _serverdatas;
-        }
-        
-        public void entityServerPos(Vector3 pos)
-        {
-        	_entityServerPos = pos;
-        }
-        
-        public void resetMessages()
-        {
+			reset();
+			KBEngine.Event.deregisterIn(this);
+			resetMessages();
+			
+			KBEngineApp.app = null;
+		}
+		
+		public NetworkInterfaceBase networkInterface()
+		{
+			return _networkInterface;
+		}
+		
+		public byte[] serverdatas()
+		{
+			return _serverdatas;
+		}
+		
+		public void entityServerPos(Vector3 pos)
+		{
+			_entityServerPos = pos;
+		}
+		
+		public void resetMessages()
+		{
 			_serverErrs.Clear();
 			Messages.clear();
 			EntityDef.reset();
 			
 			Entity.clear();
 			Dbg.DEBUG_MSG("KBEngine::resetMessages()");
-        }
-        
+		}
+		
 		public virtual void reset()
 		{
 			KBEngine.Event.clearFiredEvents();
@@ -244,6 +269,7 @@
 			if (_networkInterface != null)
 				_networkInterface.reset();
 
+			_filter = null;
 			_networkInterface = new NetworkInterfaceTCP();
 			
 			_spacedatas.Clear();
@@ -301,7 +327,7 @@
 			// 更新玩家的位置与朝向到服务端
 			updatePlayerToServer();
 			
-			if(span.Seconds > _args.serverHeartbeatTick)
+			if(_args.serverHeartbeatTick > 0 && span.Seconds > _args.serverHeartbeatTick)
 			{
 				span = _lastTickCBTime - _lastTickTime;
 				
@@ -361,7 +387,16 @@
 				bundle.newMessage(Messages.messages["Loginapp_hello"]);
 			else
 				bundle.newMessage(Messages.messages["Baseapp_hello"]);
-			
+
+			_filter = null;
+
+			if (_args.networkEncryptType == NETWORK_ENCRYPT_TYPE.ENCRYPT_TYPE_BLOWFISH)
+			{
+				_filter = new BlowfishFilter();
+				_encryptedKey = ((BlowfishFilter)_filter).key();
+				_networkInterface.setFilter(null);
+			}
+
 			bundle.writeString(clientVersion);
 			bundle.writeString(clientScriptVersion);
 			bundle.writeBlob(_encryptedKey);
@@ -373,32 +408,43 @@
 		*/
 		public void Client_onHelloCB(MemoryStream stream)
 		{
-			serverVersion = stream.readString();
+			string str_serverVersion = stream.readString();
 			serverScriptVersion = stream.readString();
 			string currentServerProtocolMD5 = stream.readString();
 			string currentServerEntitydefMD5 = stream.readString();
 			Int32 ctype = stream.readInt32();
 			
-			Dbg.DEBUG_MSG("KBEngine::Client_onHelloCB: verInfo(" + serverVersion 
+			Dbg.DEBUG_MSG("KBEngine::Client_onHelloCB: verInfo(" + str_serverVersion 
 				+ "), scriptVersion("+ serverScriptVersion + "), srvProtocolMD5("+ serverProtocolMD5 
 				+ "), srvEntitydefMD5("+ serverEntitydefMD5 + "), + ctype(" + ctype + ")!");
 			
-			/* 
-            if(serverProtocolMD5 != currentServerProtocolMD5)
-            {
-                Dbg.ERROR_MSG("Client_onHelloCB: digest not match! serverProtocolMD5=" + serverProtocolMD5 + "(server: " + currentServerProtocolMD5 + ")");
-                Event.fireAll("onVersionNotMatch", new object[] { clientVersion, serverVersion });
-                return;
-            }
-			*/
-			
-            if (serverEntitydefMD5 != currentServerEntitydefMD5)
-            {
-                Dbg.ERROR_MSG("Client_onHelloCB: digest not match! serverEntitydefMD5=" + serverEntitydefMD5 + "(server: " + currentServerEntitydefMD5 + ")");
-                Event.fireAll("onVersionNotMatch", new object[] { clientVersion, serverVersion });
-                return;
-            }
-			
+			if(str_serverVersion != "Getting")
+			{
+				serverVersion = str_serverVersion;
+
+				/* 
+				if(serverProtocolMD5 != currentServerProtocolMD5)
+				{
+					Dbg.ERROR_MSG("Client_onHelloCB: digest not match! serverProtocolMD5=" + serverProtocolMD5 + "(server: " + currentServerProtocolMD5 + ")");
+					Event.fireAll(EventOutTypes.onVersionNotMatch, clientVersion, serverVersion);
+					return;
+				}
+				*/
+				
+				if (serverEntitydefMD5 != currentServerEntitydefMD5)
+				{
+					Dbg.ERROR_MSG("Client_onHelloCB: digest not match! serverEntitydefMD5=" + serverEntitydefMD5 + "(server: " + currentServerEntitydefMD5 + ")");
+					Event.fireAll(EventOutTypes.onVersionNotMatch, clientVersion, serverVersion);
+					return;
+				}
+			}
+
+			if (_args.networkEncryptType == NETWORK_ENCRYPT_TYPE.ENCRYPT_TYPE_BLOWFISH)
+			{
+				_networkInterface.setFilter(_filter);
+				_filter = null;
+			}
+
 			onServerDigest();
 			
 			if(currserver == "baseapp")
@@ -435,6 +481,23 @@
 			// 无需实现，已由插件生成静态代码
 		}
 
+		public void Client_onImportClientSDK(MemoryStream stream)
+		{
+			int remainingFiles = 0;
+			remainingFiles = stream.readInt32();
+
+			string fileName;
+			fileName = stream.readString();
+
+			int fileSize = 0;
+			fileSize = stream.readInt32();
+
+			byte[] fileDatas = new byte[0];
+			fileDatas = stream.readBlob();
+
+			Event.fireIn("onImportClientSDK", remainingFiles, fileName, fileSize, fileDatas);
+		}
+		
 		/*
 			引擎版本不匹配
 		*/
@@ -443,7 +506,7 @@
 			serverVersion = stream.readString();
 			
 			Dbg.ERROR_MSG("Client_onVersionNotMatch: verInfo=" + clientVersion + "(server: " + serverVersion + ")");
-			Event.fireAll("onVersionNotMatch", new object[]{clientVersion, serverVersion});
+			Event.fireAll(EventOutTypes.onVersionNotMatch, clientVersion, serverVersion);
 		}
 
 		/*
@@ -454,7 +517,7 @@
 			serverScriptVersion = stream.readString();
 			
 			Dbg.ERROR_MSG("Client_onScriptVersionNotMatch: verInfo=" + clientScriptVersion + "(server: " + serverScriptVersion + ")");
-			Event.fireAll("onScriptVersionNotMatch", new object[]{clientScriptVersion, serverScriptVersion});
+			Event.fireAll(EventOutTypes.onScriptVersionNotMatch, clientScriptVersion, serverScriptVersion);
 		}
 		
 		/*
@@ -462,8 +525,8 @@
 		*/
 		public void Client_onKicked(UInt16 failedcode)
 		{
-			Dbg.DEBUG_MSG("Client_onKicked: failedcode=" + failedcode);
-			Event.fireAll("onKicked", new object[]{failedcode});
+			Dbg.DEBUG_MSG("Client_onKicked: failedcode=" + failedcode + "(" + serverErr(failedcode) + ")");
+			Event.fireAll(EventOutTypes.onKicked, failedcode);
 		}
 		
 		/*
@@ -507,14 +570,14 @@
 			
 			if(!success)
 			{
-				Dbg.ERROR_MSG(string.Format("KBEngine::login_loginapp(): connect {0}:{1} is error!", ip, port));  
+				Dbg.ERROR_MSG(string.Format("KBEngine::login_loginapp(): connect {0}:{1} error!", ip, port));  
 				return;
 			}
 			
 			currserver = "loginapp";
 			currstate = "login";
 			
-			Dbg.DEBUG_MSG(string.Format("KBEngine::login_loginapp(): connect {0}:{1} is success!", ip, port));
+			Dbg.DEBUG_MSG(string.Format("KBEngine::login_loginapp(): connect {0}:{1} success!", ip, port));
 
 			hello();
 		}
@@ -532,11 +595,11 @@
 		{  
 			if(noconnect)
 			{
-				Event.fireOut("onLoginBaseapp", new object[]{});
+				Event.fireOut(EventOutTypes.onLoginBaseapp);
 				
 				_networkInterface.reset();
 
-				if(baseappUdpPort == 0)
+				if(_args.forceDisableUDP || baseappUdpPort == 0)
 				{
 					_networkInterface = new NetworkInterfaceTCP();
 					_networkInterface.connectTo(baseappIP, baseappTcpPort, onConnectTo_baseapp_callback, null);
@@ -563,14 +626,14 @@
 			
 			if(!success)
 			{
-				Dbg.ERROR_MSG(string.Format("KBEngine::login_baseapp(): connect {0}:{1} is error!", ip, port));
+				Dbg.ERROR_MSG(string.Format("KBEngine::login_baseapp(): connect {0}:{1} error!", ip, port));
 				return;
 			}
 			
 			currserver = "baseapp";
 			currstate = "";
 			
-			Dbg.DEBUG_MSG(string.Format("KBEngine::login_baseapp(): connect {0}:{1} is successfully!", ip, port));
+			Dbg.DEBUG_MSG(string.Format("KBEngine::login_baseapp(): connect {0}:{1} success!", ip, port));
 
 			hello();
 		}
@@ -593,11 +656,11 @@
 			if(_networkInterface.valid())
 				return;
 
-			Event.fireAll("onReloginBaseapp", new object[]{});
+			Event.fireAll(EventOutTypes.onReloginBaseapp);
 
 			_networkInterface.reset();
 
-			if(baseappUdpPort == 0)
+			if(_args.forceDisableUDP || baseappUdpPort == 0)
 			{
 				_networkInterface = new NetworkInterfaceTCP();
 				_networkInterface.connectTo(baseappIP, baseappTcpPort, onReConnectTo_baseapp_callback, null);
@@ -613,12 +676,11 @@
 		{
 			if(!success)
 			{
-				Dbg.ERROR_MSG(string.Format("KBEngine::reloginBaseapp(): connect {0}:{1} is error!", ip, port));
+				Dbg.ERROR_MSG(string.Format("KBEngine::reloginBaseapp(): connect {0}:{1} error!", ip, port));
 				return;
 			}
 			
-			
-			Dbg.DEBUG_MSG(string.Format("KBEngine::relogin_baseapp(): connect {0}:{1} is successfully!", ip, port));
+			Dbg.DEBUG_MSG(string.Format("KBEngine::relogin_baseapp(): connect {0}:{1} success!", ip, port));
 
 			Bundle bundle = Bundle.createObject();
 			bundle.newMessage(Messages.messages["Baseapp_reloginBaseapp"]);
@@ -695,23 +757,25 @@
 			
 			if(!success)
 			{
-				Dbg.ERROR_MSG(string.Format("KBEngine::resetpassword_loginapp(): connect {0}:{1} is error!", ip, port));
+				Dbg.ERROR_MSG(string.Format("KBEngine::resetpassword_loginapp(): connect {0}:{1} error!", ip, port));
 				return;
 			}
 			
-			Dbg.DEBUG_MSG(string.Format("KBEngine::resetpassword_loginapp(): connect {0}:{1} is success!", ip, port)); 
+			Dbg.DEBUG_MSG(string.Format("KBEngine::resetpassword_loginapp(): connect {0}:{1} success!", ip, port)); 
 			onOpenLoginapp_resetpassword();
 		}
 		
 		public void Client_onReqAccountResetPasswordCB(UInt16 failcode)
 		{
+			Event.fireOut(EventOutTypes.onResetPassword, failcode);
+			
 			if(failcode != 0)
 			{
-				Dbg.ERROR_MSG("KBEngine::Client_onReqAccountResetPasswordCB: " + username + " is failed! code=" + failcode + "!");
+				Dbg.ERROR_MSG("KBEngine::Client_onReqAccountResetPasswordCB: " + username + " failed! code=" + failcode + "(" + serverErr(failcode) + ")!");
 				return;
 			}
 	
-			Dbg.DEBUG_MSG("KBEngine::Client_onReqAccountResetPasswordCB: " + username + " is successfully!");
+			Dbg.DEBUG_MSG("KBEngine::Client_onReqAccountResetPasswordCB: " + username + " success!");
 		}
 		
 		/*
@@ -729,13 +793,15 @@
 
 		public void Client_onReqAccountBindEmailCB(UInt16 failcode)
 		{
+			Event.fireOut(EventOutTypes.onBindAccountEmail, failcode);
+
 			if(failcode != 0)
 			{
-				Dbg.ERROR_MSG("KBEngine::Client_onReqAccountBindEmailCB: " + username + " is failed! code=" + failcode + "!");
+				Dbg.ERROR_MSG("KBEngine::Client_onReqAccountBindEmailCB: " + username + " failed! code=" + failcode + "(" + serverErr(failcode) + ")!");
 				return;
 			}
 
-			Dbg.DEBUG_MSG("KBEngine::Client_onReqAccountBindEmailCB: " + username + " is successfully!");
+			Dbg.DEBUG_MSG("KBEngine::Client_onReqAccountBindEmailCB: " + username + " success!");
 		}
 		
 		/*
@@ -753,13 +819,15 @@
 
 		public void Client_onReqAccountNewPasswordCB(UInt16 failcode)
 		{
+			Event.fireOut(EventOutTypes.onNewPassword, failcode);
+
 			if(failcode != 0)
 			{
-				Dbg.ERROR_MSG("KBEngine::Client_onReqAccountNewPasswordCB: " + username + " is failed! code=" + failcode + "!");
+				Dbg.ERROR_MSG("KBEngine::Client_onReqAccountNewPasswordCB: " + username + " failed! code=" + failcode + "(" + serverErr(failcode) + ")!");
 				return;
 			}
 	
-			Dbg.DEBUG_MSG("KBEngine::Client_onReqAccountNewPasswordCB: " + username + " is successfully!");
+			Dbg.DEBUG_MSG("KBEngine::Client_onReqAccountNewPasswordCB: " + username + " success!");
 		}
 
 		public void createAccount(string username, string password, byte[] datas)
@@ -808,11 +876,11 @@
 			
 			if(!success)
 			{
-				Dbg.ERROR_MSG(string.Format("KBEngine::createAccount_loginapp(): connect {0}:{1} is error!", ip, port));
+				Dbg.ERROR_MSG(string.Format("KBEngine::createAccount_loginapp(): connect {0}:{1} error!", ip, port));
 				return;
 			}
 			
-			Dbg.DEBUG_MSG(string.Format("KBEngine::createAccount_loginapp(): connect {0}:{1} is success!", ip, port)); 
+			Dbg.DEBUG_MSG(string.Format("KBEngine::createAccount_loginapp(): connect {0}:{1} success!", ip, port)); 
 			onOpenLoginapp_createAccount();
 		}
 		
@@ -830,8 +898,8 @@
 		{
 			UInt16 failedcode = stream.readUint16();
 			_serverdatas = stream.readBlob();
-			Dbg.ERROR_MSG("KBEngine::Client_onLoginFailed: failedcode(" + failedcode + "), datas(" + _serverdatas.Length + ")!");
-			Event.fireAll("onLoginFailed", new object[]{failedcode});
+			Dbg.ERROR_MSG("KBEngine::Client_onLoginFailed: failedcode(" + failedcode + ":" + serverErr(failedcode) + "), datas(" + _serverdatas.Length + ")!");
+			Event.fireAll(EventOutTypes.onLoginFailed, failedcode, _serverdatas);
 		}
 		
 		/*
@@ -844,11 +912,11 @@
 			baseappIP = stream.readString();
 			baseappTcpPort = stream.readUint16();
 			baseappUdpPort = stream.readUint16();
+			_serverdatas = stream.readBlob();
 
 			Dbg.DEBUG_MSG("KBEngine::Client_onLoginSuccessfully: accountName(" + accountName + "), addr(" + 
 					baseappIP + ":" + baseappTcpPort + "|" + baseappUdpPort + "), datas(" + _serverdatas.Length + ")!");
-			
-			_serverdatas = stream.readBlob();
+
 			login_baseapp(true);
 		}
 		
@@ -857,8 +925,8 @@
 		*/
 		public void Client_onLoginBaseappFailed(UInt16 failedcode)
 		{
-			Dbg.ERROR_MSG("KBEngine::Client_onLoginBaseappFailed: failedcode(" + failedcode + ")!");
-			Event.fireAll("onLoginBaseappFailed", new object[]{failedcode});
+			Dbg.ERROR_MSG("KBEngine::Client_onLoginBaseappFailed: failedcode=" + failedcode + "("+ serverErr(failedcode) + ")!");
+			Event.fireAll(EventOutTypes.onLoginBaseappFailed, failedcode);
 		}
 
 		/*
@@ -866,8 +934,8 @@
 		*/
 		public void Client_onReloginBaseappFailed(UInt16 failedcode)
 		{
-			Dbg.ERROR_MSG("KBEngine::Client_onReloginBaseappFailed: failedcode(" + failedcode + ")!");
-			Event.fireAll("onReloginBaseappFailed", new object[]{failedcode});
+			Dbg.ERROR_MSG("KBEngine::Client_onReloginBaseappFailed: failedcode=" + failedcode + "(" + serverErr(failedcode) + ")!");
+			Event.fireAll(EventOutTypes.onReloginBaseappFailed, failedcode);
 		}
 		
 		/*
@@ -877,7 +945,7 @@
 		{
 			entity_uuid = stream.readUint64();
 			Dbg.DEBUG_MSG("KBEngine::Client_onReloginBaseappSuccessfully: name(" + username + ")!");
-			Event.fireAll("onReloginBaseappSuccessfully", new object[]{});
+			Event.fireAll(EventOutTypes.onReloginBaseappSuccessfully);
 		}
 
 		/*
@@ -922,6 +990,7 @@
 				}
 				
 				entity.__init__();
+				entity.attachComponents();
 				entity.inited = true;
 				
 				if(_args.isOnInitCallPropertysSetMethods)
@@ -1115,6 +1184,7 @@
 				entity.onPositionChanged(entity.position);
 								
 				entity.__init__();
+				entity.attachComponents();
 				entity.inited = true;
 				entity.inWorld = true;
 				entity.enterWorld();
@@ -1182,10 +1252,10 @@
 			else
 			{
 				if(_controlledEntities.Remove(entity))
-					Event.fireOut("onLoseControlledEntity", new object[]{entity});
+					Event.fireOut(EventOutTypes.onLoseControlledEntity, entity);
 
 				entities.Remove(eid);
-				entity.onDestroy();
+				entity.destroy();
 				_entityIDAliasIDList.Remove(eid);
 			}
 		}
@@ -1241,11 +1311,11 @@
 			UInt16 retcode = stream.readUint16();
 			byte[] datas = stream.readBlob();
 			
-			Event.fireOut("onCreateAccountResult", new object[]{retcode, datas});
+			Event.fireOut(EventOutTypes.onCreateAccountResult, retcode, datas);
 			
 			if(retcode != 0)
 			{
-				Dbg.WARNING_MSG("KBEngine::Client_onCreateAccountResult: " + username + " create is failed! code=" + retcode + "!");
+				Dbg.WARNING_MSG("KBEngine::Client_onCreateAccountResult: " + username + " create is failed! code=" + retcode + "(" + serverErr(retcode)+ ")!");
 				return;
 			}
 	
@@ -1285,7 +1355,7 @@
 			try
 			{
 				entity.onControlled(isCont);
-				Event.fireOut("onControlled", new object[]{entity, isCont});
+				Event.fireOut(EventOutTypes.onControlled, entity, isCont);
 			}
 			catch (Exception e)
 			{
@@ -1307,7 +1377,7 @@
 			TimeSpan span = now - _lastUpdateToServerTime;
 
 			if (span.Ticks < _updatePlayerToServerPeroid * _1MS_TO_100NS)
-                return;
+				return;
 			
 			Entity playerEntity = player();
 			if (playerEntity == null || playerEntity.inWorld == false || playerEntity.isControlled)
@@ -1413,7 +1483,7 @@
 			isLoadedGeometry = true;
 			spaceID = uspaceID;
 			spaceResPath = respath;
-			Event.fireOut("addSpaceGeometryMapping", new object[]{spaceResPath});
+			Event.fireOut(EventOutTypes.addSpaceGeometryMapping, spaceResPath);
 		}
 
 		public void clearSpace(bool isall)
@@ -1441,7 +1511,7 @@
 					if(dic.Value.inWorld)
 						dic.Value.leaveWorld();
 					
-				    dic.Value.onDestroy();
+					dic.Value.destroy();
 				}  
 		
 				entities.Clear();
@@ -1454,7 +1524,7 @@
 					if(dic.Value.inWorld)
 						dic.Value.leaveWorld();
 
-				    dic.Value.onDestroy();
+					dic.Value.destroy();
 				}  
 		
 				entities.Clear();
@@ -1490,7 +1560,7 @@
 			if(key == "_mapping")
 				addSpaceGeometryMapping(spaceID, value);
 			
-			Event.fireOut("onSetSpaceData", new object[]{spaceID, key, value});
+			Event.fireOut(EventOutTypes.onSetSpaceData, spaceID, key, value);
 		}
 
 		/*
@@ -1500,7 +1570,7 @@
 		{
 			Dbg.DEBUG_MSG("KBEngine::Client_delSpaceData: spaceID(" + spaceID + "), key(" + key + ")");
 			_spacedatas.Remove(key);
-			Event.fireOut("onDelSpaceData", new object[]{spaceID, key});
+			Event.fireOut(EventOutTypes.onDelSpaceData, spaceID, key);
 		}
 		
 		public string getSpaceData(string key)
@@ -1539,10 +1609,10 @@
 			}
 
 			if(_controlledEntities.Remove(entity))
-				Event.fireOut("onLoseControlledEntity", new object[]{entity});
+				Event.fireOut(EventOutTypes.onLoseControlledEntity, entity);
 
 			entities.Remove(eid);
-			entity.onDestroy();
+			entity.destroy();
 		}
 		
 		/*
@@ -1558,7 +1628,7 @@
 			if (entity != null && entity.isControlled)
 			{
 				entity.position.Set(_entityServerPos.x, _entityServerPos.y, _entityServerPos.z);
-				Event.fireOut("updatePosition", new object[]{entity});
+				Event.fireOut(EventOutTypes.updatePosition, entity);
 				entity.onUpdateVolatileData();
 			}
 		}
@@ -1573,7 +1643,7 @@
 			{
 				entity.position.x = _entityServerPos.x;
 				entity.position.z = _entityServerPos.z;
-				Event.fireOut("updatePosition", new object[]{entity});
+				Event.fireOut(EventOutTypes.updatePosition, entity);
 				entity.onUpdateVolatileData();
 			}
 		}
@@ -1589,7 +1659,7 @@
 			if (entity != null && entity.isControlled)
 			{
 				entity.direction.Set(roll, pitch, yaw);
-				Event.fireOut("set_direction", new object[]{entity});
+				Event.fireOut(EventOutTypes.set_direction, entity);
 				entity.onUpdateVolatileData();
 			}
 		}
@@ -1642,258 +1712,532 @@
 		public void Client_onUpdateData_ypr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float y = stream.readFloat();
+			float p = stream.readFloat();
+			float r = stream.readFloat();
 			
-			SByte y = stream.readInt8();
-			SByte p = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, p, r, -1);
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, p, r, -1, false);
 		}
 		
 		public void Client_onUpdateData_yp(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float y = stream.readFloat();
+			float p = stream.readFloat();
 			
-			SByte y = stream.readInt8();
-			SByte p = stream.readInt8();
-			
-			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, p, KBEMath.KBE_FLT_MAX, -1);
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, p, KBEMath.KBE_FLT_MAX, -1, false);
 		}
 		
 		public void Client_onUpdateData_yr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float y = stream.readFloat();
+			float r = stream.readFloat();
 			
-			SByte y = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, KBEMath.KBE_FLT_MAX, r, -1);
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, KBEMath.KBE_FLT_MAX, r, -1, false);
 		}
 		
 		public void Client_onUpdateData_pr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float p = stream.readFloat();
+			float r = stream.readFloat();
 			
-			SByte p = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, p, r, -1);
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, p, r, -1, false);
 		}
 		
 		public void Client_onUpdateData_y(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float y = stream.readFloat();
 			
-			SByte y = stream.readInt8();
-			
-			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, -1);
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, -1, false);
 		}
 		
 		public void Client_onUpdateData_p(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
 			
-			SByte p = stream.readInt8();
+			float p = stream.readFloat();
 			
-			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, -1);
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, -1, false);
 		}
 		
 		public void Client_onUpdateData_r(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float r = stream.readFloat();
 			
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, -1);
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, -1, false);
 		}
 		
 		public void Client_onUpdateData_xz(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
-			
-			Vector2 xz = stream.readPackXZ();
-			
-			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 1);
+
+			float x = stream.readFloat();
+			float z = stream.readFloat();
+
+			_updateVolatileData(eid, x, KBEMath.KBE_FLT_MAX, z, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 1, false);
 		}
 		
 		public void Client_onUpdateData_xz_ypr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float z = stream.readFloat();
+
+			float y = stream.readFloat();
+			float p = stream.readFloat();
+			float r = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-	
-			SByte y = stream.readInt8();
-			SByte p = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], y, p, r, 1);
+			_updateVolatileData(eid, x, KBEMath.KBE_FLT_MAX, z, y, p, r, 1, false);
 		}
 		
 		public void Client_onUpdateData_xz_yp(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float z = stream.readFloat();
+
+			float y = stream.readFloat();
+			float p = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-	
-			SByte y = stream.readInt8();
-			SByte p = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], y, p, KBEMath.KBE_FLT_MAX, 1);
+			_updateVolatileData(eid, x, KBEMath.KBE_FLT_MAX, z, y, p, KBEMath.KBE_FLT_MAX, 1, false);
 		}
 		
 		public void Client_onUpdateData_xz_yr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float z = stream.readFloat();
+
+			float y = stream.readFloat();
+			float r = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-	
-			SByte y = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], y, KBEMath.KBE_FLT_MAX, r, 1);
+			_updateVolatileData(eid, x, KBEMath.KBE_FLT_MAX, z, y, KBEMath.KBE_FLT_MAX, r, 1, false);
 		}
 		
 		public void Client_onUpdateData_xz_pr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float z = stream.readFloat();
+
+			float p = stream.readFloat();
+			float r = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-	
-			SByte p = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], KBEMath.KBE_FLT_MAX, p, r, 1);
+			_updateVolatileData(eid, x, KBEMath.KBE_FLT_MAX, z, KBEMath.KBE_FLT_MAX, p, r, 1, false);
 		}
 		
 		public void Client_onUpdateData_xz_y(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
-			Vector2 xz = stream.readPackXZ();
-			SByte yaw = stream.readInt8();
-			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], yaw, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 1);
+
+			float x = stream.readFloat();
+			float z = stream.readFloat();
+
+			float yaw = stream.readFloat();
+
+			_updateVolatileData(eid, x, KBEMath.KBE_FLT_MAX, z, yaw, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 1, false);
 		}
 		
 		public void Client_onUpdateData_xz_p(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float z = stream.readFloat();
+
+			float p = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-	
-			SByte p = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, 1);
+			_updateVolatileData(eid, x, KBEMath.KBE_FLT_MAX, z, KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, 1, false);
 		}
 		
 		public void Client_onUpdateData_xz_r(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float z = stream.readFloat();
+
+			float r = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-	
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, 1);
+			_updateVolatileData(eid, x, KBEMath.KBE_FLT_MAX, z, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, 1, false);
 		}
 		
 		public void Client_onUpdateData_xyz(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
-			
-			Vector2 xz = stream.readPackXZ();
-			float y = stream.readPackY();
-			
-			_updateVolatileData(eid, xz[0], y, xz[1], KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 0);
+
+			float x = stream.readFloat();
+			float y = stream.readFloat();
+			float z = stream.readFloat();
+
+			_updateVolatileData(eid, x, y, z, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 0, false);
 		}
 		
 		public void Client_onUpdateData_xyz_ypr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float y = stream.readFloat();
+			float z = stream.readFloat();
+
+			float yaw = stream.readFloat();
+			float p = stream.readFloat();
+			float r = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-			float y = stream.readPackY();
-			
-			SByte yaw = stream.readInt8();
-			SByte p = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], y, xz[1], yaw, p, r, 0);
+			_updateVolatileData(eid, x, y, z, yaw, p, r, 0, false);
 		}
 		
 		public void Client_onUpdateData_xyz_yp(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
-			
-			Vector2 xz = stream.readPackXZ();
-			float y = stream.readPackY();
-			
-			SByte yaw = stream.readInt8();
-			SByte p = stream.readInt8();
 
-			_updateVolatileData(eid, xz[0], y, xz[1], yaw, p, KBEMath.KBE_FLT_MAX, 0);
+			float x = stream.readFloat();
+			float y = stream.readFloat();
+			float z = stream.readFloat();
+
+			float yaw = stream.readFloat();
+			float p = stream.readFloat();
+
+			_updateVolatileData(eid, x, y, z, yaw, p, KBEMath.KBE_FLT_MAX, 0, false);
 		}
 		
 		public void Client_onUpdateData_xyz_yr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float y = stream.readFloat();
+			float z = stream.readFloat();
+
+			float yaw = stream.readFloat();
+			float r = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-			float y = stream.readPackY();
-			
-			SByte yaw = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], y, xz[1], yaw, KBEMath.KBE_FLT_MAX, r, 0);
+			_updateVolatileData(eid, x, y, z, yaw, KBEMath.KBE_FLT_MAX, r, 0, false);
 		}
 		
 		public void Client_onUpdateData_xyz_pr(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float y = stream.readFloat();
+			float z = stream.readFloat();
+
+			float p = stream.readFloat();
+			float r = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-			float y = stream.readPackY();
-			
-			SByte p = stream.readInt8();
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], y, xz[1], KBEMath.KBE_FLT_MAX, p, r, 0);
+			_updateVolatileData(eid, x, y, z, KBEMath.KBE_FLT_MAX, p, r, 0, false);
 		}
 		
 		public void Client_onUpdateData_xyz_y(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
-			
-			Vector2 xz = stream.readPackXZ();
-			float y = stream.readPackY();
-			
-			SByte yaw = stream.readInt8();
-			_updateVolatileData(eid, xz[0], y, xz[1], yaw, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 0);
+
+			float x = stream.readFloat();
+			float y = stream.readFloat();
+			float z = stream.readFloat();
+
+			float yaw = stream.readFloat();
+
+			_updateVolatileData(eid, x, y, z, yaw, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 0, false);
 		}
 		
 		public void Client_onUpdateData_xyz_p(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
+
+			float x = stream.readFloat();
+			float y = stream.readFloat();
+			float z = stream.readFloat();
+
+			float p = stream.readFloat();
 			
-			Vector2 xz = stream.readPackXZ();
-			float y = stream.readPackY();
-			
-			SByte p = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], y, xz[1], KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, 0);
+			_updateVolatileData(eid, x, y, z, KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, 0, false);
 		}
 		
 		public void Client_onUpdateData_xyz_r(MemoryStream stream)
 		{
 			Int32 eid = getViewEntityIDFromStream(stream);
 			
+			float x = stream.readFloat();
+			float y = stream.readFloat();
+			float z = stream.readFloat();
+
+			float r = stream.readFloat();
+			
+			_updateVolatileData(eid, x, y, z, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, 0, false);
+		}
+
+		public void Client_onUpdateData_ypr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			SByte y = stream.readInt8();
+			SByte p = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, p, r, -1, true);
+		}
+
+		public void Client_onUpdateData_yp_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			SByte y = stream.readInt8();
+			SByte p = stream.readInt8();
+
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, p, KBEMath.KBE_FLT_MAX, -1, true);
+		}
+
+		public void Client_onUpdateData_yr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			SByte y = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, KBEMath.KBE_FLT_MAX, r, -1, true);
+		}
+
+		public void Client_onUpdateData_pr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			SByte p = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, p, r, -1, true);
+		}
+
+		public void Client_onUpdateData_y_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			SByte y = stream.readInt8();
+
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, y, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, -1, true);
+		}
+
+		public void Client_onUpdateData_p_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			SByte p = stream.readInt8();
+
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, -1, true);
+		}
+
+		public void Client_onUpdateData_r_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, -1, true);
+		}
+
+		public void Client_onUpdateData_xz_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+
+			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 1, true);
+		}
+
+		public void Client_onUpdateData_xz_ypr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+
+			SByte y = stream.readInt8();
+			SByte p = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], y, p, r, 1, true);
+		}
+
+		public void Client_onUpdateData_xz_yp_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+
+			SByte y = stream.readInt8();
+			SByte p = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], y, p, KBEMath.KBE_FLT_MAX, 1, true);
+		}
+
+		public void Client_onUpdateData_xz_yr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+
+			SByte y = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], y, KBEMath.KBE_FLT_MAX, r, 1, true);
+		}
+
+		public void Client_onUpdateData_xz_pr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+
+			SByte p = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], KBEMath.KBE_FLT_MAX, p, r, 1, true);
+		}
+
+		public void Client_onUpdateData_xz_y_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+			Vector2 xz = stream.readPackXZ();
+			SByte yaw = stream.readInt8();
+			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], yaw, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 1, true);
+		}
+
+		public void Client_onUpdateData_xz_p_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+
+			SByte p = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, 1, true);
+		}
+
+		public void Client_onUpdateData_xz_r_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], KBEMath.KBE_FLT_MAX, xz[1], KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, 1, true);
+		}
+
+		public void Client_onUpdateData_xyz_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
 			Vector2 xz = stream.readPackXZ();
 			float y = stream.readPackY();
-			
-			SByte r = stream.readInt8();
-			
-			_updateVolatileData(eid, xz[0], y, xz[1], KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, 0);
+
+			_updateVolatileData(eid, xz[0], y, xz[1], KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 0, true);
 		}
-		
-		private void _updateVolatileData(Int32 entityID, float x, float y, float z, float yaw, float pitch, float roll, sbyte isOnGround)
+
+		public void Client_onUpdateData_xyz_ypr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+			float y = stream.readPackY();
+
+			SByte yaw = stream.readInt8();
+			SByte p = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], y, xz[1], yaw, p, r, 0, true);
+		}
+
+		public void Client_onUpdateData_xyz_yp_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+			float y = stream.readPackY();
+
+			SByte yaw = stream.readInt8();
+			SByte p = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], y, xz[1], yaw, p, KBEMath.KBE_FLT_MAX, 0, true);
+		}
+
+		public void Client_onUpdateData_xyz_yr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+			float y = stream.readPackY();
+
+			SByte yaw = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], y, xz[1], yaw, KBEMath.KBE_FLT_MAX, r, 0, true);
+		}
+
+		public void Client_onUpdateData_xyz_pr_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+			float y = stream.readPackY();
+
+			SByte p = stream.readInt8();
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], y, xz[1], KBEMath.KBE_FLT_MAX, p, r, 0, true);
+		}
+
+		public void Client_onUpdateData_xyz_y_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+			float y = stream.readPackY();
+
+			SByte yaw = stream.readInt8();
+			_updateVolatileData(eid, xz[0], y, xz[1], yaw, KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, 0, true);
+		}
+
+		public void Client_onUpdateData_xyz_p_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+			float y = stream.readPackY();
+
+			SByte p = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], y, xz[1], KBEMath.KBE_FLT_MAX, p, KBEMath.KBE_FLT_MAX, 0, true);
+		}
+
+		public void Client_onUpdateData_xyz_r_optimized(MemoryStream stream)
+		{
+			Int32 eid = getViewEntityIDFromStream(stream);
+
+			Vector2 xz = stream.readPackXZ();
+			float y = stream.readPackY();
+
+			SByte r = stream.readInt8();
+
+			_updateVolatileData(eid, xz[0], y, xz[1], KBEMath.KBE_FLT_MAX, KBEMath.KBE_FLT_MAX, r, 0, true);
+		}
+
+		private void _updateVolatileData(Int32 entityID, float x, float y, float z, float yaw, float pitch, float roll, sbyte isOnGround, bool isOptimized)
 		{
 			Entity entity = null;
 
@@ -1917,40 +2261,40 @@
 			if(roll != KBEMath.KBE_FLT_MAX)
 			{
 				changeDirection = true;
-				entity.direction.x = KBEMath.int82angle((SByte)roll, false) * 360 / ((float)System.Math.PI * 2);
+				entity.direction.x = (isOptimized ? KBEMath.int82angle((SByte)roll, false) : roll) * 360 / ((float)System.Math.PI * 2);
 			}
 
 			if(pitch != KBEMath.KBE_FLT_MAX)
 			{
 				changeDirection = true;
-				entity.direction.y = KBEMath.int82angle((SByte)pitch, false) * 360 / ((float)System.Math.PI * 2);
+				entity.direction.y = (isOptimized ? KBEMath.int82angle((SByte)pitch, false) : pitch) * 360 / ((float)System.Math.PI * 2);
 			}
 			
 			if(yaw != KBEMath.KBE_FLT_MAX)
 			{
 				changeDirection = true;
-				entity.direction.z = KBEMath.int82angle((SByte)yaw, false) * 360 / ((float)System.Math.PI * 2);
+				entity.direction.z = (isOptimized ? KBEMath.int82angle((SByte)yaw, false) : yaw) * 360 / ((float)System.Math.PI * 2);
 			}
 			
 			bool done = false;
 			if(changeDirection == true)
 			{
-				Event.fireOut("set_direction", new object[]{entity});
+				Event.fireOut(EventOutTypes.set_direction, entity);
 				done = true;
 			}
 			
-	            bool positionChanged = x != KBEMath.KBE_FLT_MAX || y != KBEMath.KBE_FLT_MAX || z != KBEMath.KBE_FLT_MAX;
-	            if (x == KBEMath.KBE_FLT_MAX) x = 0.0f;
-	            if (y == KBEMath.KBE_FLT_MAX) y = 0.0f;
-	            if (z == KBEMath.KBE_FLT_MAX) z = 0.0f;
-            
+			bool positionChanged = x != KBEMath.KBE_FLT_MAX || y != KBEMath.KBE_FLT_MAX || z != KBEMath.KBE_FLT_MAX;
+			if (x == KBEMath.KBE_FLT_MAX) x = isOptimized ? 0.0f : entity.position.x;
+			if (y == KBEMath.KBE_FLT_MAX) y = isOptimized ? 0.0f : entity.position.y;
+			if (z == KBEMath.KBE_FLT_MAX) z = isOptimized ? 0.0f : entity.position.z;
+			
 			if(positionChanged)
 			{
-				Vector3 pos = new Vector3(x + _entityServerPos.x, y + _entityServerPos.y, z + _entityServerPos.z);
-				
+				Vector3 pos = isOptimized ? new Vector3(x + _entityServerPos.x, y + _entityServerPos.y, z + _entityServerPos.z) : new Vector3(x, y, z);
+				 
 				entity.position = pos;
 				done = true;
-				Event.fireOut("updatePosition", new object[]{entity});
+				Event.fireOut(EventOutTypes.updatePosition, entity);
 			}
 			
 			if(done)
@@ -1963,16 +2307,19 @@
 		*/
 		public void Client_onStreamDataStarted(Int16 id, UInt32 datasize, string descr)
 		{
+			Event.fireOut(EventOutTypes.onStreamDataStarted, id, datasize, descr);
 		}
 		
 		public void Client_onStreamDataRecv(MemoryStream stream)
 		{
-			// Int16 resID = stream.readInt16();
-			// byte[] datas = stream.readBlob();
+			Int16 resID = stream.readInt16();
+			byte[] datas = stream.readBlob();
+			Event.fireOut(EventOutTypes.onStreamDataRecv, resID, datas);
 		}
 		
 		public void Client_onStreamDataCompleted(Int16 id)
 		{
+			Event.fireOut(EventOutTypes.onStreamDataCompleted, id);
 		}
 	}
 	
@@ -1982,36 +2329,36 @@
 		/*
 			KBEngine处理线程
 		*/
-	    public class KBEThread
-	    {
+		public class KBEThread
+		{
 
-	        KBEngineApp app_;
+			KBEngineApp app_;
 			public bool over = false;
 			
-	        public KBEThread(KBEngineApp app)
-	        {
-	            this.app_ = app;
-	        }
+			public KBEThread(KBEngineApp app)
+			{
+				this.app_ = app;
+			}
 
-	        public void run()
-	        {
+			public void run()
+			{
 				Dbg.INFO_MSG("KBEThread::run()");
 				over = false;
 
-	            try
-	            {
-	                this.app_.process();
-	            }
-	            catch (Exception e)
-	            {
-	                Dbg.ERROR_MSG(e.ToString());
-	            }
+				try
+				{
+					this.app_.process();
+				}
+				catch (Exception e)
+				{
+					Dbg.ERROR_MSG(e.ToString());
+				}
 				
 				over = true;
 				Dbg.INFO_MSG("KBEThread::end()");
-	        }
-	    }
-    
+			}
+		}
+	
 		private Thread _t = null;
 		public KBEThread kbethread = null;
 

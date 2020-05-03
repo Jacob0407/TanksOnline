@@ -7,6 +7,7 @@ from KBEDebug import *
 class PlayerAvatar(KBEngine.Entity):
 	def __init__(self):
 		KBEngine.Entity.__init__(self)
+		self.space = None
 
 		INFO_MSG("[PlayerAvatar], init success. %i" % self.id)
 		self.client.onEnter()
@@ -23,3 +24,11 @@ class PlayerAvatar(KBEngine.Entity):
 		INFO_MSG("[PlayerAvatar], id = %i, space_id:%s, onTeleportSuccess: %s, id:%s" % (self.id, self.spaceID, space_room, space_room.id))
 
 		space_room.enter(self)
+		self.space = space_room
+
+	def end_game(self):
+		"""
+		结束本局游戏
+		:return:
+		"""
+		self.space and self.space.end_game()

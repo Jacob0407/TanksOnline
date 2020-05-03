@@ -27,4 +27,12 @@ class GameBattleSpace(KBEngine.Space):
 		DEBUG_MSG('Space::onLeave space entityID = %i.' % (entityID))
 
 
+	def end_game(self):
+		"""
+		结束游戏
+		:return:
+		"""
+		for _avatar_id in self._avatar_set:
+			_avatar = KBEngine.entities.get(_avatar_id, None)
+			_avatar and _avatar.base.back_to_game_hall()
 

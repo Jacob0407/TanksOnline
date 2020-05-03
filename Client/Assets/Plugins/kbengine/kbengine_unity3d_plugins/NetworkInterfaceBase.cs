@@ -9,7 +9,6 @@
 	using System.Text;
 	using System.Text.RegularExpressions;
 	using System.Threading;
-	using System.Runtime.Remoting.Messaging;
 
 	using MessageID = System.UInt16;
 	using MessageLength = System.UInt16;
@@ -31,6 +30,7 @@
 		protected Socket _socket = null;
 		protected PacketReceiverBase _packetReceiver = null;
 		protected PacketSenderBase _packetSender = null;
+		protected EncryptionFilter _filter = null;
 
 		public bool connected = false;
 		
@@ -40,6 +40,7 @@
 			public string connectIP = "";
 			public int connectPort = 0;
 			public ConnectCallback connectCB = null;
+			public AsyncConnectMethod caller = null;
 			public object userData = null;
 			public Socket socket = null;
 			public NetworkInterfaceBase networkInterface = null;
@@ -66,6 +67,7 @@
 		{
 			_packetReceiver = null;
 			_packetSender = null;
+			_filter = null;
 			connected = false;
 
 			if(_socket != null)
@@ -86,18 +88,18 @@
 		}
 		
 
-        public virtual void close()
-        {
-           if(_socket != null)
+		public virtual void close()
+		{
+			if(_socket != null)
 			{
 				_socket.Close(0);
 				_socket = null;
-				Event.fireAll("onDisconnected", new object[]{});
-            }
+				Event.fireAll(EventOutTypes.onDisconnected);
+			}
 
-            _socket = null;
-            connected = false;
-        }
+			_socket = null;
+			connected = false;
+		}
 
 		protected abstract PacketReceiverBase createPacketReceiver();
 		protected abstract PacketSenderBase createPacketSender();
@@ -137,7 +139,7 @@
 				Dbg.ERROR_MSG(string.Format("NetworkInterfaceBase::_onConnectionState(), connect error! ip: {0}:{1}, err: {2}", state.connectIP, state.connectPort, state.error));
 			}
 
-			Event.fireAll("onConnectionState", new object[] { success });
+			Event.fireAll(EventOutTypes.onConnectionState, success);
 
 			if (state.connectCB != null)
 				state.connectCB(state.connectIP, state.connectPort, success, state.userData);
@@ -184,14 +186,13 @@
 		private void _asyncConnectCB(IAsyncResult ar)
 		{
 			ConnectState state = (ConnectState)ar.AsyncState;
-			AsyncResult result = (AsyncResult)ar;
-			AsyncConnectMethod caller = (AsyncConnectMethod)result.AsyncDelegate;
+			
 			onAsyncConnectCB(state);
 
 			Dbg.DEBUG_MSG(string.Format("NetworkInterfaceBase::_asyncConnectCB(), connect to '{0}:{1}' finish. error = '{2}'", state.connectIP, state.connectPort, state.error));
 
 			// Call EndInvoke to retrieve the results.
-			caller.EndInvoke(ar);
+			state.caller.EndInvoke(ar);
 			Event.fireIn("_onConnectionState", new object[] { state });
 		}
 
@@ -208,6 +209,8 @@
 
 			_socket = createSocket();
 
+			AsyncConnectMethod asyncConnectMethod = new AsyncConnectMethod(this._asyncConnect);
+
 			ConnectState state = new ConnectState();
 			state.connectIP = ip;
 			state.connectPort = port;
@@ -215,6 +218,7 @@
 			state.userData = userData;
 			state.socket = _socket;
 			state.networkInterface = this;
+			state.caller = asyncConnectMethod;
 
 			Dbg.DEBUG_MSG("connect to " + ip + ":" + port + " ...");
 			connected = false;
@@ -222,8 +226,7 @@
 			// 先注册一个事件回调，该事件在当前线程触发
 			Event.registerIn("_onConnectionState", this, "_onConnectionState");
 
-			var v = new AsyncConnectMethod(this._asyncConnect);
-			v.BeginInvoke(state, new AsyncCallback(this._asyncConnectCB), state);
+			asyncConnectMethod.BeginInvoke(state, new AsyncCallback(this._asyncConnectCB), state);
 		}
 
 		public virtual bool send(MemoryStream stream)
@@ -236,6 +239,9 @@
 			if (_packetSender == null)
 				_packetSender = createPacketSender();
 
+			if (_filter != null)
+				return _filter.send(_packetSender, stream);
+
 			return _packetSender.send(stream);
 		}
 
@@ -246,6 +252,17 @@
 
 			if (_packetReceiver != null)
 				_packetReceiver.process();
+		}
+
+
+		public EncryptionFilter fileter()
+		{
+			return _filter;
+		}
+
+		public void setFilter(EncryptionFilter filter)
+		{
+			_filter = filter;
 		}
 	}
 }

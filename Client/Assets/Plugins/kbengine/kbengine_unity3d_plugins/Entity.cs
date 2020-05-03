@@ -49,7 +49,13 @@
 		{
 		}
 		
-		public virtual void onDestroy ()
+		public void destroy()
+		{
+			detachComponents();
+			onDestroy();
+		}
+
+		public virtual void onDestroy()
 		{
 		}
 		
@@ -83,6 +89,16 @@
 			// 动态生成
 		}
 
+		public virtual void onComponentsEnterworld()
+		{
+			// 动态生成， 通知组件onEnterworld
+		}
+
+		public virtual void onComponentsLeaveworld()
+		{
+			// 动态生成， 通知组件onLeaveworld
+		}
+
 		public virtual EntityCall getBaseEntityCall()
 		{
 			// 动态生成
@@ -108,6 +124,16 @@
 			// 动态生成
 		}
 		
+		public virtual void attachComponents()
+		{
+			// 动态生成
+		}
+
+		public virtual void detachComponents()
+		{
+			// 动态生成
+		}
+
 		public void baseCall(string methodname, params object[] arguments)
 		{			
 			if(KBEngineApp.app.currserver == "loginapp")
@@ -241,13 +267,14 @@
 			
 			try{
 				onEnterWorld();
+				onComponentsEnterworld();
 			}
 			catch (Exception e)
 			{
 				Dbg.ERROR_MSG(className + "::onEnterWorld: error=" + e.ToString());
 			}
 
-			Event.fireOut("onEnterWorld", new object[]{this});
+			Event.fireOut(EventOutTypes.onEnterWorld, this);
 		}
 		
 		public virtual void onEnterWorld()
@@ -261,13 +288,14 @@
 			
 			try{
 				onLeaveWorld();
+				onComponentsLeaveworld();
 			}
 			catch (Exception e)
 			{
 				Dbg.ERROR_MSG(className + "::onLeaveWorld: error=" + e.ToString());
 			}
 
-			Event.fireOut("onLeaveWorld", new object[]{this});
+			Event.fireOut(EventOutTypes.onLeaveWorld, this);
 		}
 		
 		public virtual void onLeaveWorld()
@@ -287,11 +315,11 @@
 				Dbg.ERROR_MSG(className + "::onEnterSpace: error=" + e.ToString());
 			}
 			
-			Event.fireOut("onEnterSpace", new object[]{this});
+			Event.fireOut(EventOutTypes.onEnterSpace, this);
 			
 			// 要立即刷新表现层对象的位置
-			Event.fireOut("set_position", new object[]{this});
-			Event.fireOut("set_direction", new object[]{this});
+			Event.fireOut(EventOutTypes.set_position, this);
+			Event.fireOut(EventOutTypes.set_direction, this);
 		}
 		
 		public virtual void onEnterSpace()
@@ -311,7 +339,7 @@
 				Dbg.ERROR_MSG(className + "::onLeaveSpace: error=" + e.ToString());
 			}
 			
-			Event.fireOut("onLeaveSpace", new object[]{this});
+			Event.fireOut(EventOutTypes.onLeaveSpace, this);
 		}
 
 		public virtual void onLeaveSpace()
@@ -326,7 +354,7 @@
 				KBEngineApp.app.entityServerPos(position);
 			
 			if(inWorld)
-				Event.fireOut("set_position", new object[]{this});
+				Event.fireOut(EventOutTypes.set_position, this);
 		}
 
 		public virtual void onUpdateVolatileData()
@@ -342,7 +370,7 @@
 				direction.x = direction.x * 360 / ((float)System.Math.PI * 2);
 				direction.y = direction.y * 360 / ((float)System.Math.PI * 2);
 				direction.z = direction.z * 360 / ((float)System.Math.PI * 2);
-				Event.fireOut("set_direction", new object[]{this});
+				Event.fireOut(EventOutTypes.set_direction, this);
 			}
 			else
 			{
@@ -361,6 +389,12 @@
 		public virtual void onControlled(bool isControlled_)
 		{
 		
+		}
+
+		public virtual List<EntityComponent> getComponents(string componentName, bool all)
+		{
+			List<EntityComponent> founds = new List<EntityComponent>();
+			return founds;
 		}
     }
     

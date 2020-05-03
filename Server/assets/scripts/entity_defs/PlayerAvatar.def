@@ -19,6 +19,9 @@
         <reqMatch>
 	        <Exposed/>
 	    </reqMatch>
+
+	    <back_to_game_hall> </back_to_game_hall>
+
 	</BaseMethods>
 
 	<CellMethods>
@@ -27,6 +30,10 @@
 			<Arg>		POSITION3D		</Arg>
 			<Arg>		DIRECTION3D		</Arg>
 		</teleport_space>
+
+		<end_game>
+		    <Exposed/>
+		</end_game>
 
 	</CellMethods>
 
